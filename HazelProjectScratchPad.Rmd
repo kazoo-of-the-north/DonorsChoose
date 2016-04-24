@@ -31,6 +31,7 @@ filename <- "/Users/sov436/courses/E-107/DonorsChoose/opendata_projects.zip"
 projects <- read_csv(unz(filename, "opendata_projects.csv")) 
 projects <- projects %>% filter(year(date_posted) == 2014)
 write_csv(projects, "data/opendata_projects_2014.csv")
+zip("data/opendata_projects_2014.zip", "data/opendata_projects_2014.csv")
 projects <- projects %>%
   mutate(date_posted = as_date(date_posted),
          date_completed = as_date(date_completed),
@@ -53,7 +54,8 @@ projects <- projects %>%
 # 7. Remove all \" (vi - :%s/\\\"//g)
 resources <- read_csv("opendata_resources.csv") 
 # Filter out resources for projects posted in 2014
-resources_2014 <- resources %>%
+resources <- resources %>%
   semi_join(projects, by = "_projectid")
-write_csv(projects, "data/opendata_resources_2014.csv")
+write_csv(resources, "data/opendata_resources_2014.csv")
+zip("data/opendata_resources_2014.zip", "data/opendata_resources_2014.csv")
 ```
