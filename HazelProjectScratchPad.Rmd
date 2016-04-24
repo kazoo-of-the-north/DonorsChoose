@@ -1,0 +1,59 @@
+---
+title: "HazelProjectScratchPad"
+author: "Hazel John"
+date: "April 24, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(knitr)
+library(readr)
+library(lubridate)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(gridExtra)
+theme_set(theme_bw(base_size = 16))
+```
+
+## Data Wranglings
+Load the dataset and do some data exploration
+
+
+```{r}
+# Read in the projects info
+filename <- "/Users/sov436/courses/E-107/DonorsChoose/opendata_projects.zip"
+projects <- read_csv(unz(filename, "opendata_projects.csv")) 
+projects <- projects %>% filter(year(date_posted) == 2014)
+write_csv(projects, "data/opendata_projects_2014.csv")
+projects <- projects %>%
+  mutate(date_posted = as_date(date_posted),
+         date_completed = as_date(date_completed),
+         date_thank_you_packet_mailed =
+           as_date(date_thank_you_packet_mailed),
+         date_expiration = as_date(date_expiration)) 
+
+# Read in the resources info 
+# Data cleanup was done in vi after realizing that piping commands to sed
+# was taking too long
+# Sequence of steps for data clean in vi
+# 1. Manually enter newline after item_quantity
+# 2. Replace all ctrl-Ms (vi- :%s/\\ctrl-vctrl-m\\//g
+# 3. Remove all quoted commas (vi- :%s/\\\,//g)
+# 4. Remove \\ just before the string end (vi - :%s/\\\\\"\,\"/\"\,\"/g)
+# 5. Replace all \" not preceded by alphabets or space with "in"
+#    (vi - :%s/\([^a-zA-Z ]\)\\\"/\1in/g)
+# 6. Replace all \" preceded by a number and a space with "in"
+#    (vi - :%s/\([0-9]\) \\\"/\1in/g)
+# 7. Remove all \" (vi - :%s/\\\"//g)
+resources <- read_csv("opendata_resources.csv") 
+# Filter out resources for projects posted in 2014
+resources_2014 <- resources %>%
+  semi_join(projects, by = "_projectid")
+write_csv(projects, "data/opendata_resources_2014.csv")
+```
