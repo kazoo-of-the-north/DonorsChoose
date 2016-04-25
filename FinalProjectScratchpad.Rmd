@@ -1,0 +1,258 @@
+---
+title: "FinalProjectScratchpad"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(dplyr)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r report start time} 
+startTime<-timestamp()
+startTime
+```
+
+```{r load csv files}
+
+# Hazel's method: 
+# Read in the projects info
+#filename <- "/Users/sov436/courses/E-107/DonorsChoose/opendata_projects.zip"
+setwd("/Users/jimschlough/Documents/Harvard/CSC-E107/Final project/DonorsChoose/data/" )
+projectsFilename <- "opendata_projects_output.csv"
+#projects <- read_csv(unz(filename, "opendata_projects.csv")) 
+projects <- read_csv(projectsFilename) 
+projects <- projects %>% filter(date_posted > '2013-12-31' & date_posted < '2015-01-01')
+
+# populate donations
+donationsFilename<-"opendata_donations.csv"
+donations <- read_csv(donationsFilename) 
+# number of donations prior to filtering out only those with 2014 project IDs
+count(donations)
+donations<- donations %>% filter(`_projectid` %in% projects$`_projectid`)
+# number of donations after filtering out only those with 2014 project IDs
+count(donations)
+
+# OPTIONAL test out that writing & decompressing and reading RDS file works 
+write_rds(donations, "./opendata_2014_donations.rds.gz", compress = "gz")
+donations<-read_rds( "./opendata_2014_donations.rds.gz") 
+# number of donations after writing & decompressing and reading RDS file 
+count(donations)
+
+
+# fill resources .... still having problems here
+resourcesFilename <- "/Users/jimschlough/Documents/Harvard/CSC-E107/Final\ project/DonorsChoose/data/opendata_resources.csv"
+
+numberOfRowsToRead<-1000
+numberOfRowsToSkip<-0
+resources <- read_csv(resourcesFilename) #, n_max = numberOfRowsToRead )
+
+resources<- resources %>% filter(`_projectid` %in% projects$`_projectid`)
+write_rds(resources, "./opendata_2014_resources.rds.gz", compress = "gz")
+# how to read it back in later: 
+#donations<-read_rds( "./opendata_2014_resources.rds.gz") 
+
+# fill essays 
+essaysFilename <- "./opendata_essays.csv"
+essays <- read_csv(essaysFilename)
+essays <- essays %>% filter( `_projectid` %in% projects$`_projectid`)
+
+# this RDS file ends up being ~193Mb, which is too large to put into our git repository
+#write_rds(essays, "./opendata_2014_essays.rds.gz", compress = "gz")
+
+```
+
+```{r  break out set 1}
+# my first try at making smaller segments
+numberOfEssays<-count(essays)$n
+numberOfEssays
+roughlyOneFifthOfEssays<-round(numberOfEssays/5)
+
+# break out set 1 
+essays1of5<-head(essays,roughlyOneFifthOfEssays)
+write_rds(essays1of5, "./opendata_2014_essays1of5.rds.gz", compress = "gz")
+# total number of essays in essays before any are removed  
+count(essays )$n
+# number of essays in essays1of5
+essays1of5_count<- count(essays1of5)$n
+essays1of5_count
+
+# assumption here is that _projectid and _teacherid together uniquely identify an essay
+# remove the ones put into the first record set
+essays<-anti_join(essays, essays1of5, by=c("_projectid","_teacherid"))
+
+# total number of essays in essays after 1st 5 are removed  
+count(essays )$n
+
+# optionally remove essays1of5, after we know all the records will make it 
+rm(essays1of5)
+
+
+```
+
+```{r break out set 2 }
+# break out set 2 
+essays2of5<-head(essays,roughlyOneFifthOfEssays)
+write_rds(essays2of5, "./opendata_2014_essays2of5.rds.gz", compress = "gz")
+
+# total number of essays in essays before 2nd batch are removed  
+count(essays )$n
+# number of essays in essays2of5
+essays2of5_count<- count(essays2of5)$n
+essays2of5_count
+
+# assumption here is that _projectid and _teacherid together uniquely identify an essay
+# remove the ones put into the first record set 
+essays<-anti_join(essays, essays2of5, by=c("_projectid","_teacherid"))
+
+# total number of essays in essays after 2nd batch are removed  
+count(essays )$n
+
+# optionally remove essays2of5, after we know all the records will make it 
+rm(essays2of5)
+
+```
+
+
+```{r break out set 3 }
+# break out set 3 
+essays3of5<-head(essays,roughlyOneFifthOfEssays)
+write_rds(essays3of5, "./opendata_2014_essays3of5.rds.gz", compress = "gz")
+
+# total number of essays in essays before 3rd batch are removed  
+count(essays )$n
+# number of essays in essays3of5
+essays3of5_count<- count(essays3of5)$n
+essays3of5_count
+
+# assumption here is that _projectid and _teacherid together uniquely identify an essay
+# remove the ones put into the first record set 
+essays<-anti_join(essays, essays3of5, by=c("_projectid","_teacherid"))
+
+# total number of essays in essays after 3rd batch are removed  
+count(essays )$n
+
+# optionally remove essays3of5, after we know all the records will make it 
+rm(essays3of5)
+
+
+```
+
+
+```{r break out set 4 }
+
+# break out set 4 
+essays4of5<-head(essays,roughlyOneFifthOfEssays)
+write_rds(essays4of5, "./opendata_2014_essays4of5.rds.gz", compress = "gz")
+
+# total number of essays in essays before 4th batch are removed  
+count(essays )$n
+# number of essays in essays4of5
+essays4of5_count<- count(essays4of5)$n
+essays4of5_count
+
+# assumption here is that _projectid and _teacherid together uniquely identify an essay
+# remove the ones put into the first record set 
+essays<-anti_join(essays, essays4of5, by=c("_projectid","_teacherid"))
+
+# total number of essays in essays after 4th batch are removed  
+count(essays )$n
+
+# optionally remove essays4of5, after we know all the records will make it 
+rm(essays4of5)
+
+
+```
+
+```{r break out set 5 }
+# break out set 5 is what remains 
+essays5of5<- essays 
+
+write_rds(essays5of5, "./opendata_2014_essays5of5.rds.gz", compress = "gz")
+
+# total number of essays in essays before 5th batch are removed  
+count(essays )$n
+# number of essays in essays5of5
+essays5of5_count<- count(essays5of5)$n
+essays5of5_count
+
+# total number of essays in essays after 5th batch are removed  
+count(essays5of5 )$n
+
+# optionally remove essays5of5, after we know all the records will make it 
+rm(essays5of5)
+
+
+```
+
+```{r REASSEMBLY TEST  }
+#####
+#
+#  REASSEMBLY TEST
+# put it all back together again to see in the number of records agrees with what we began having
+
+rm(essays)
+# rm(essays1of5)
+# rm(essays2of5)
+# rm(essays3of5)
+# rm(essays4of5)
+# rm(essays5of5)
+
+essays1of5<-read_rds("./opendata_2014_essays1of5.rds.gz")
+essays2of5<-read_rds("./opendata_2014_essays2of5.rds.gz")
+essays3of5<-read_rds("./opendata_2014_essays3of5.rds.gz")
+essays4of5<-read_rds("./opendata_2014_essays4of5.rds.gz")
+essays5of5<-read_rds("./opendata_2014_essays5of5.rds.gz")
+
+essays<-essays1of5
+essays<-rbind(essays,essays2of5)
+essays<-rbind(essays,essays3of5)
+essays<-rbind(essays,essays4of5)
+essays<-rbind(essays,essays5of5)
+# total number of records test, test passes if true
+# total number of reassembled essays:
+count(essays)$n
+
+# original number of essays
+numberOfEssays
+
+# ultimate reassembly test passes if true
+numberOfEssays==count(essays)$n
+
+```
+
+```{r garbage code}
+# as of now, the following function remains as garbage I should throw out:
+# fullRead<-TRUE
+# fillResources<- function()
+#   {
+#   while(fullRead)
+#     {
+#       resourcesTemp <- read_csv(resourcesFilename, skip = numberOfRowsToSkip, n_max = numberOfRowsToRead)
+#       numberOfRowsToSkip<- numberOfRowsToSkip + numberOfRowsToRead
+#       fullRead<- count(resourcesTemp)==numberOfRowsToRead
+#       colnames(resourcesTemp)<-colnames(resources)
+#       resourcesTemp<-resourcesTemp %>% filter(`_projectid` %in% projects$`_projectid`)
+#       resources<-rbind(resources, resourcesTemp) 
+#     }
+#   }
+# 
+# fillResources()
+# 
+# count(problems(resources))==0
+```
+
+
+```{r report stop time} 
+stopTime<-timestamp()
+stopTime
+```
+
