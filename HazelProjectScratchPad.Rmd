@@ -43,7 +43,8 @@ projects <- projects %>%
 # Data cleanup was done in vi after realizing that piping commands to sed
 # was taking too long
 # Sequence of steps for data clean in vi
-# 1. Manually enter newline after item_quantity
+# 1. Add newline after item_quantity 
+#    (vi - :%s/item_quantity/item_quantityctrl-vctrl-m/g)
 # 2. Replace all ctrl-Ms (vi- :%s/\\ctrl-vctrl-m\\//g
 # 3. Remove all quoted commas (vi- :%s/\\\,//g)
 # 4. Remove \\ just before the string end (vi - :%s/\\\\\"\,\"/\"\,\"/g)
@@ -56,6 +57,39 @@ resources <- read_csv("opendata_resources.csv")
 # Filter out resources for projects posted in 2014
 resources <- resources %>%
   semi_join(projects, by = "_projectid")
+# Save data to csv file
 write_csv(resources, "data/opendata_resources_2014.csv")
+# Zip datafile to make it easier to checkin to git
 zip("data/opendata_resources_2014.zip", "data/opendata_resources_2014.csv")
+
+# Donations file cleanup
+# Data cleanup was done in vi after realizing that piping commands to sed
+# was taking too long
+# Sequence of steps for data clean in vi
+# 1. Add newline after donation_message 
+#    (vi - :%s/donation_message/donation_message-vctrl-m/g)
+# 2. Replace all quoted ctrl-Ms (vi- :%s/\\ctrl-vctrl-m\\//g
+# 3. Removed all \\ at the end of string, so that we can replace 
+#    quoted double quotes (vi - :%s/\\\\\"\_$/\"/g)
+# 4. Removed all double backslashes that are in a string by itself
+#    (vi - :%s/\\\\\"/\"/g)
+# 5. Replace quoted double quotes with quoted single quotes
+#    (vi - :%s/\\\"/\\\'/g)
+# 6. Remove all quoted commas (vi- :%s/\\\,//g)
+
+# Read in cleaned up donations data
+donations <- read_csv("opendata_donations.csv") 
+# Filter out donations for projects posted in 2014
+donations <- donations %>%
+  semi_join(projects, by = "_projectid")
+# Split donations into two
+donations_split <- split(donations, month(donations$donation_timestamp) < 7)
+# Save data to separate csv files
+write_csv(donations_split$"TRUE", "data/opendata_donations_2014-1.csv")
+write_csv(donations_split$"FALSE", "data/opendata_donations_2014-2.csv")
+# Zip datafile to make it easier to checkin to git
+zip("data/opendata_donations_2014-1.zip",
+    "data/opendata_donations_2014-1.csv")
+zip("data/opendata_donations_2014-2.zip",
+    "data/opendata_donations_2014-2.csv")
 ```
