@@ -57,6 +57,21 @@ resources <- read_csv(resourcesFilename) #, n_max = numberOfRowsToRead )
 
 resources<- resources %>% filter(`_projectid` %in% projects$`_projectid`)
 write_rds(resources, "./opendata_2014_resources.rds.gz", compress = "gz")
+
+# write out 2 segments for 2014 resources 
+numberOfResources<-count(resources)$n
+numberOfResources
+resources1of2<-head(resources, round(numberOfResources/2))
+count(resources1of2)$n
+
+resources2of2<-anti_join(resources, resources1of2)
+count(resources2of2)$n
+write_rds(resources1of2, "./opendata_2014_resources1of2.rds.gz", compress = "gz")
+write_rds(resources2of2, "./opendata_2014_resources2of2.rds.gz", compress = "gz")
+rm(resources1of2)
+rm(resources2of2)
+
+
 # how to read it back in later: 
 #donations<-read_rds( "./opendata_2014_resources.rds.gz") 
 
