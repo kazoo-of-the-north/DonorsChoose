@@ -1,0 +1,71 @@
+---
+title: "Basic_exploratory_steve"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+library(caret)
+library(tidyr)
+
+setwd("~/Dropbox/datasciencefinalproject/DonorsChoose/data")
+
+projects <- read_csv("opendata_projects_output.csv")
+
+projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
+
+#poverty level graph
+#amount of goal
+projects %>% ggplot(aes(x = poverty_level, y = percent_funded)) + geom_boxplot()
+#amount of goal jitter plot
+projects %>% ggplot(aes(x = poverty_level, y = funding_status)) + geom_jitter(size = .001)
+
+poverty <- projects %>% group_by(poverty_level, funding_status) %>% summarise(total= n()) %>% 
+  group_by(poverty_level) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup 
+
+
+#percent funded
+poverty %>% ggplot(aes(poverty_level, percent)) + geom_point(aes(color = funding_status))
+
+
+#latitude and longitude level graph by amount of goal
+projects %>% ggplot(aes(x = school_latitude, y = percent_funded)) + geom_point()
+projects %>% ggplot(aes(x = school_longitude, y = percent_funded)) + geom_point()
+
+#state graph
+#percent of goal
+projects %>% ggplot(aes(x = school_state, y = percent_funded)) + geom_boxplot()
+state <- projects %>% group_by(school_state, funding_status) %>% summarise(total= n()) %>% 
+  group_by(school_state) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup
+
+state %>% ggplot(aes(school_state, percent)) + geom_point(aes(color = funding_status))
+
+#school urban vs rual
+projects %>% ggplot(aes(x = school_metro, y = percent_funded)) + geom_boxplot()
+
+urban <- projects %>% group_by(school_metro, funding_status) %>% summarise(total= n()) %>% 
+  group_by(school_metro) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup
+
+urban %>% ggplot(aes(school_metro, percent)) + geom_point(aes(color = funding_status))
+
+#teacher prefix
+projects %>% ggplot(aes(x = teacher_prefix, y = percent_funded)) + geom_boxplot()
+
+prefix <- projects %>% group_by(teacher_prefix, funding_status) %>% summarise(total= n()) %>% 
+  group_by(teacher_prefix) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup
+
+prefix %>% ggplot(aes(teacher_prefix, percent)) + geom_point(aes(color = funding_status))
+
+
+
+
+```
+
