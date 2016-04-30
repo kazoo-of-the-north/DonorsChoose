@@ -8,24 +8,40 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# A Study of the Data Provided by the Donors Choose Organization 
 
-### Overview and Motivation: 
-Provide an overview of the project goals and the motivation for it. Consider that this will be read by people who did not see your project proposal.
+## Overview and Motivation: 
+*Provide an overview of the project goals and the motivation for it. Consider that this will be read by people who did not see your project proposal.*
+Funding the contemporary K-12 classroom is greatly challenging and many teachers believe that resources provided are insufficient in meeting the most basic objectives. Nontraditional support is playing an increasingly important part in supporting the modern classroom. 
 
-### Related Work: 
-Anything that inspired you, such as a paper, a web site, or something we discussed in class.
+The Donors Choose web platform provides a mechanism of providing support to teachers by benefactors. A potential donor may read an appeal written by a teacher to fulfill a specific classroom material need, and donates towards their funding goal. If the funding goal is met, these materials are sourced by fulfillment sources under the control of the Donors Choose organization, and sent directly to the school. 
 
-### Initial Questions: 
-What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?
+Given the changes in public sentiments and commitments towards financial support of the community school over the past few decades, the ability to raise funds directly into the classroom might come to be considered a vital skill of the teacher in supporting classroom activities. 
 
-### Data: 
-Source, scraping method, cleanup, etc.
+When written appeals succeed by becoming fully funded, or fail by expiring, the data surrounding the appeal is gathered and made publicly available. By analyzing this data, it might be possible to better understand the factors correlated with success or failure of a written appeal. Some factors such as location, date and time, and poverty level are beyond the control of a teacher. Other factors, such as the written content of an appeal, or to a lesser extent, the credentials of the teacher, can be controlled. 
 
-### Exploratory Analysis: 
-What visualizations did you use to look at your data in different ways? What are the different statistical methods you considered? Justify the decisions you made, and show any major changes to your ideas. How did you reach these conclusions?
+We wish to apply statistical analysis of the available data in an effort to go beyond axiomatic and aesthetic beliefs regarding what makes a more or less effective funding proposal. 
 
-### Final Analysis: 
-What did you learn about the data? How did you answer the questions? How can you justify your answers?
+
+## Related Work: 
+*Anything that inspired you, such as a paper, a web site, or something we discussed in class.*
+
+## Initial Questions: 
+*What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?*
+
+## Data: 
+*Source, scraping method, cleanup, etc.*
+We are using the data made publicly available on the Donors Choose website.
+This data can be found at [here](http://data.donorschoose.org/open-data/overview/).
+
+
+## Exploratory Analysis: 
+*What visualizations did you use to look at your data in different ways? What are the different statistical methods you considered? Justify the decisions you made, and show any major changes to your ideas. How did you reach these conclusions? *
+
+## Final Analysis: 
+*What did you learn about the data? How did you answer the questions? How can you justify your answers? * 
+
+
 
 
 
