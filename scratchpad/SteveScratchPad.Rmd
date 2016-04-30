@@ -228,6 +228,18 @@ mod_fit <- train(funded ~ total_price_excluding_optional_support + primary_focus
 #fliter out less used variables
 projects2 <- projects %>% filter(school_year_round == 'f'& school_magnet == 'f'& school_charter == 'f'& school_nlns == 'f'& school_kipp == 'f'& school_charter_ready_promise == 'f'& teacher_teach_for_america == 'f'& teacher_ny_teaching_fellow == 'f')
 
+
+#trying most fitting variables
 mod_fit2 <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + primary_focus_subject + students_reached + date_posted + teacher_prefix + school_state + school_metro + resource_type + grade_level + eligible_double_your_impact_match + date_posted,  data=projects2, method="glm", family="binomial")
+
+#picking a few mor likely important variables
+mod_fit3 <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + primary_focus_subject + date_posted + teacher_prefix + school_state + eligible_double_your_impact_match + date_posted,  data=projects2, method="glm", family="binomial")
+
+#even fewer variables
+mod_fit4 <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + primary_focus_subject + students_reached + date_posted,  data=projects2, method="glm", family="binomial")
+
+mod_fit5 <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + date_posted,  data=projects2, method="glm", family="binomial")
+
+mod_fit6 <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", family="binomial")
 ```
 
