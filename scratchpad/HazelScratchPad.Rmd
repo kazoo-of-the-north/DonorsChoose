@@ -5,20 +5,16 @@ date: "April 24, 2016"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
 ```{r, eval=FALSE}
-
-# Install packages we need just once
-library(devtools)
-devtools::install_github("juliasilge/tidytext")
-install.packages("wordcloud")
+# # Install packages we need just once
+# library(devtools)
+# devtools::install_github("juliasilge/tidytext")
+# install.packages("wordcloud")
 ```
 
-```{r}
+```{r echo = FALSE, cache = FALSE}
+#knitr::opts_chunk$set(cache = TRUE, warning = FALSE, message = FALSE)
+
 library(knitr)
 library(readr)
 library(lubridate)
@@ -222,7 +218,7 @@ for (type in types_list) {
 
 ## Data Visualization & Analysis
 
-```{r}
+```{r, eval=FALSE}
 
 myStackedBarChart <-function(colname) {
   # Create percentage of funding status grouped by colname
