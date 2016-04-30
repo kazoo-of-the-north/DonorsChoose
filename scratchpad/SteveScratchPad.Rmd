@@ -15,6 +15,7 @@ library(readr)
 library(lubridate)
 library(caret)
 library(tidyr)
+library(broom)
 
 #setwd("~/Dropbox/datasciencefinalproject/DonorsChoose/data")
 
@@ -115,6 +116,12 @@ projects %>% group_by(teacher_teach_for_america, funding_status) %>% summarise(t
   group_by(teacher_teach_for_america) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
   ggplot(aes(teacher_teach_for_america, percent)) + geom_point(aes(color = funding_status))
 
+#ny teaching fellow
+
+projects %>% group_by(teacher_ny_teaching_fellow, funding_status) %>% summarise(total= n()) %>% 
+  group_by(teacher_ny_teaching_fellow) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(teacher_ny_teaching_fellow, percent)) + geom_point(aes(color = funding_status))
+
 
 #primary focus subject
 
@@ -171,6 +178,56 @@ projects %>% group_by(eligible_almost_home_match, funding_status) %>% summarise(
 
 projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth()
 
+projects %>% mutate(sintry = asin(percent_funded)) %>% ggplot(aes(x = date_posted, y = sintry)) + geom_smooth()
 
+
+```
+
+
+```{r}
+
+##MODELING
+
+#create column for binary 1=funded, 0 = not funded regression
+projects <- projects %>% mutate(funded = ifelse(funding_status == "completed", 1 , 0))
+
+#split into test and train data sets (90% in train)
+n_test <- round(nrow(projects) / 10)
+test_indices <- sample(1:nrow(projects), n_test, replace=FALSE)
+test <- projects[test_indices,]
+train <- projects[-test_indices,]
+
+
+#root mean square error defined in class to use test models, think this will work with logistic output, not 100% sure
+RMSE <- function(true_ratings, predicted_ratings){
+    sqrt(mean((true_ratings - predicted_ratings)^2))
+}
+
+#using confusion matrix to test accurary
+
+tab <- table(  dat$glm_pred , dat$truth )
+conf_matrix <- confusionMatrix(tab)
+conf_matrix$table
+conf_matrix$overall["Accuracy"]
+
+#model based off of date alone
+
+fit <- glm(funded ~ date_posted, data=train, family = "binomial")
+
+
+#see train documentation for other logistic methods http://topepo.github.io/caret/Logistic_Regression.html
+control <- trainControl(method='cv', number=10, p=.8)
+
+logreg <- train(funded ~ total_price_excluding_optional_support,
+             data = train,
+             method = "logicBag")
+
+mod_fit <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + school_charter + primary_focus_subject + students_reached,  data=train, method="glm", family="binomial")
+
+
+#fliter out less used variables
+projects2 <- projects %>% filter(school_year_round == 'f'& school_magnet == 'f'& school_charter == 'f'& school_nlns == 'f'& school_kipp == 'f'& school_charter_ready_promise == 'f'& teacher_teach_for_america == 'f'& teacher_ny_teaching_fellow == 'f')
+
+mod_fit2 <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + primary_focus_subject + students_reached + date_posted + teacher_prefix + school_state + school_metro + resource_type + grade_level + eligible_double_your_impact_match + date_posted,  data=projects2, method="glm", family="binomial")
 ```
 
