@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 # A Study of the Data Provided by the Donors Choose Organization 
+by
+Steve Henle
+Hazel John
+Jim Schlough
 
 ## Overview and Motivation: 
 *Provide an overview of the project goals and the motivation for it. Consider that this will be read by people who did not see your project proposal.*
@@ -25,6 +29,12 @@ We wish to apply statistical analysis of the available data in an effort to go b
 
 ## Related Work: 
 *Anything that inspired you, such as a paper, a web site, or something we discussed in class.*
+Jim's sister is a grade school art teacher who successfully funded a 3D printer for her classroom. On last report, the best expert for this printer is a female 4th grader.
+
+Steve writes grant proposals, so it is interesting to understand what makes a good grant proposal by way of a data analysis.
+
+Stephen Colbert made the news in 2015 [by funding every teacher's proposal for the State of South Carolina](http://time.com/3850694/stephen-colbert-funds-every-teacher-requested-grant-in-south-carolina-schools/).
+
 
 ## Initial Questions: 
 *What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?*
