@@ -16,11 +16,19 @@ library(lubridate)
 library(caret)
 library(tidyr)
 
-setwd("~/Dropbox/datasciencefinalproject/DonorsChoose/data")
+#setwd("~/Dropbox/datasciencefinalproject/DonorsChoose/data")
+
+setwd("C:/Users/Steve/Dropbox/datasciencefinalproject/DonorsChoose/data")
 
 projects <- read_csv("opendata_projects_output.csv")
 
 projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
+
+
+#test for normalacy of percent funded
+hist(projects$percent_funded)
+qqnorm(projects$percent_funded)
+print("Data is nowhere near normal, looks like logistic analysis of funded vs non-funded make much more sense.")
 
 #poverty level graph
 #amount of goal
@@ -46,7 +54,8 @@ projects %>% ggplot(aes(x = school_state, y = percent_funded)) + geom_boxplot()
 state <- projects %>% group_by(school_state, funding_status) %>% summarise(total= n()) %>% 
   group_by(school_state) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup
 
-state %>% ggplot(aes(school_state, percent)) + geom_point(aes(color = funding_status))
+state %>% ggplot(aes(school_state, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))
 
 #school urban vs rual
 projects %>% ggplot(aes(x = school_metro, y = percent_funded)) + geom_boxplot()
@@ -64,7 +73,103 @@ prefix <- projects %>% group_by(teacher_prefix, funding_status) %>% summarise(to
 
 prefix %>% ggplot(aes(teacher_prefix, percent)) + geom_point(aes(color = funding_status))
 
+#charter school
 
+projects %>% group_by(school_charter, funding_status) %>% summarise(total= n()) %>% 
+  group_by(school_charter) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(school_charter, percent)) + geom_point(aes(color = funding_status))
+
+#magnent school
+
+projects %>% group_by(school_magnet, funding_status) %>% summarise(total= n()) %>% 
+  group_by(school_magnet) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(school_magnet, percent)) + geom_point(aes(color = funding_status))
+
+#school year round
+
+projects %>% group_by(school_year_round, funding_status) %>% summarise(total= n()) %>% 
+  group_by(school_year_round) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(school_year_round, percent)) + geom_point(aes(color = funding_status))
+
+#new Leaders New Schools affiliated 
+
+projects %>% group_by(school_nlns, funding_status) %>% summarise(total= n()) %>% 
+  group_by(school_nlns) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(school_nlns, percent)) + geom_point(aes(color = funding_status))
+
+#knowledge is power public charter school (KIPP)
+
+projects %>% group_by(school_kipp, funding_status) %>% summarise(total= n()) %>% 
+  group_by(school_kipp) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(school_kipp, percent)) + geom_point(aes(color = funding_status))
+
+#school charter ready promise
+
+projects %>% group_by(school_charter_ready_promise, funding_status) %>% summarise(total= n()) %>% 
+  group_by(school_charter_ready_promise) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(school_charter_ready_promise, percent)) + geom_point(aes(color = funding_status))
+
+#teach for america teacher
+
+projects %>% group_by(teacher_teach_for_america, funding_status) %>% summarise(total= n()) %>% 
+  group_by(teacher_teach_for_america) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(teacher_teach_for_america, percent)) + geom_point(aes(color = funding_status))
+
+
+#primary focus subject
+
+projects %>% group_by(primary_focus_subject, funding_status) %>% summarise(total= n()) %>% 
+  group_by(primary_focus_subject) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(primary_focus_subject, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))
+
+#primary focus area
+
+projects %>% group_by(primary_focus_area, funding_status) %>% summarise(total= n()) %>% 
+  group_by(primary_focus_area) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(primary_focus_area, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))
+
+
+#resource type
+
+projects %>% group_by(resource_type, funding_status) %>% summarise(total= n()) %>% 
+  group_by(resource_type) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(resource_type, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))
+
+#grade level
+
+projects %>% group_by(grade_level, funding_status) %>% summarise(total= n()) %>% 
+  group_by(grade_level) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(grade_level, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))
+
+#total price excluding optional support
+
+projects %>% ggplot(aes(x = total_price_excluding_optional_support, y = percent_funded)) + geom_smooth()
+
+#students reached
+
+projects %>% ggplot(aes(x = students_reached, y = percent_funded)) + geom_smooth()
+
+#eligible for double your impact match
+
+projects %>% group_by(eligible_double_your_impact_match, funding_status) %>% summarise(total= n()) %>% 
+  group_by(eligible_double_your_impact_match) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(eligible_double_your_impact_match, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))
+
+#eligible for almost home match
+
+projects %>% group_by(eligible_almost_home_match, funding_status) %>% summarise(total= n()) %>% 
+  group_by(eligible_almost_home_match) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(eligible_almost_home_match, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))
+
+#date posted
+
+projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth()
 
 
 ```
