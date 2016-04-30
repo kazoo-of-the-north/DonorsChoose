@@ -1,5 +1,5 @@
 ---
-title: "HazelProjectScratchPad"
+title: "HazelScratchPad"
 author: "Hazel John"
 date: "April 24, 2016"
 output: html_document
@@ -9,6 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+```{r, eval=FALSE}
+
+# Install packages we need just once
+library(devtools)
+devtools::install_github("juliasilge/tidytext")
+install.packages("wordcloud")
+```
+
 ```{r}
 library(knitr)
 library(readr)
@@ -16,80 +25,301 @@ library(lubridate)
 library(dplyr)
 library(tidyr)
 library(stringr)
+library(reshape2)
 library(ggplot2)
 library(gridExtra)
+library(wordcloud)
 theme_set(theme_bw(base_size = 16))
 ```
 
-## Data Wranglings
-Load the dataset and do some data exploration
+# Data Wrangling
+
+## Step 1: Data Download & Cleanup
+
+Our first task was to download the data, clean it up and extract the data we needed. We decided to do the analysis with just the data from 2014, so the final task was the filter out unneeded data.
+
+We also save the final data sets to submit as part of the project.
+
+This is only run once and not evaluated after that since we can read data from the filtered data files directly.
 
 
-```{r}
-# Read in the projects info
-filename <- "/Users/sov436/courses/E-107/DonorsChoose/opendata_projects.zip"
-projects <- read_csv(unz(filename, "opendata_projects.csv")) 
-projects <- projects %>% filter(year(date_posted) == 2014)
-write_csv(projects, "data/opendata_projects_2014.csv")
-zip("data/opendata_projects_2014.zip", "data/opendata_projects_2014.csv")
+```{r, eval=FALSE}
+
+# Create function to write data frame to zipped rds file
+# The dataframe is split into smaller files depending on size
+writeToDisk <- function(df, path) {
+  # get the size of the data frame
+  filesz = object.size(df)
+  
+  # Figure out if it needs to be split, we try to 
+  # split into sizes ~ 250MB (before compression)
+  numsplits = filesz %/% (150*1024*1024)
+  
+  # Split into subsets and write to disk in RDS format
+  # so that we can preserve attritubes including type
+  if (numsplits > 1) {
+    # Split the dataframe into "numsplits" subsets
+    df_split <- split(df, ntile(df$`_projectid`, numsplits))
+    
+    cat("Writing", numsplits, "files with prefix", path, "\n")
+    
+    # Save data to separate rds files
+    # Wrap loop inside invisible() since we are not interested in
+    # the return values
+    invisible(lapply(names(df_split), function(x) {
+      
+      write_rds(df_split[[x]], paste0(path, x, "of", numsplits, ".rds.gz"),
+                compress = "gz")
+    }))
+  }
+  else {
+    
+    cat("Writing 1 file with prefix", path, "\n")
+    write_rds(df, paste0(path, ".rds.gz"), compress = "gz")
+  }
+}
+
+# Create function that download file of type "kind", removes special 
+# characters and loads the data
+retrieveData <- function(kind, needs_cleanup) {
+  
+  # Create the download link
+  url <- paste0("https://s3.amazonaws.com/open_data/csv/opendata_",
+                  kind, ".zip")
+     
+  # Create the path to download the file to           
+  zipname <- paste0("data/opendata_", kind, ".zip")
+  
+  # Create the filename
+  filename <- paste0("opendata_", kind, ".csv")
+  
+  cat("Downloading from", url, "...")
+  
+  # Download the file
+  download.file(url, zipname)
+  
+  # Donations, resources and essays data files needed cleanup with
+  # special characters, escaped characters etc. creating read errors.
+  # Data cleanup was done using sed as a system call after
+  # realizing that using pipe() to run sed from R was slow.
+  # NOTE: The sed script was created on MacOS and might not be portable.
+  # Tried to run sed inside pipe - scan(pipe(sed_cmd), sep = ",") 
+  # but had too many issues with needing to use multiple escaped characters
+  # Also tried readlines() followed by gsub() but the performance was poor.
+  if (needs_cleanup) {
+    # cleanup is needed so unzip, run sed and then read in data
+    
+    # unzip the file
+    unzip(zipname, filename)
+    
+    # Create a sed command to clean out special characters
+    sed_cmd <- paste0("sed -i '' -f ", kind,
+                      "_clnup.sed ", filename)
+    
+    cat("Running data cleanup for", filename, "...")
+    
+    # Run the sed command
+    system(sed_cmd)
+    
+    cat("Loading", kind, "...")
+    
+    # Read in the data
+    assign(kind, read_csv(filename), envir=globalenv())
+    
+    # Remove files
+    unlink(zipname)
+    unlink(filename)
+  }
+  else {
+    cat("Loading", kind, "...")
+    
+    # cleanup is not needed, so read in data directly
+    assign(kind, read_csv(unz(zipname, filename)), envir=globalenv())
+
+    # Remove zip file
+    unlink(zipname)
+  }
+}
+
+# Create the list the type of data files we want to download
+types_list = c("projects", "resources", "donations", "essays")
+  
+# Note which files need cleanup
+needs_cleanup = c(FALSE, TRUE, TRUE, TRUE)
+
+# Download files, remove special characters and load data
+for (index in seq(1:4)) {
+  retrieveData(types_list[index], needs_cleanup[index])
+}
+
+# Convert dates to "Date" format
 projects <- projects %>%
   mutate(date_posted = as_date(date_posted),
          date_completed = as_date(date_completed),
          date_thank_you_packet_mailed =
            as_date(date_thank_you_packet_mailed),
-         date_expiration = as_date(date_expiration)) 
+         date_expiration = as_date(date_expiration))
 
-# Read in the resources info 
-# Data cleanup was done in vi after realizing that piping commands to sed
-# was taking too long
-# Sequence of steps for data clean in vi
-# 1. Add newline after item_quantity 
-#    (vi - :%s/item_quantity/item_quantityctrl-vctrl-m/g)
-# 2. Replace all ctrl-Ms (vi- :%s/\\ctrl-vctrl-m\\//g
-# 3. Remove all quoted commas (vi- :%s/\\\,//g)
-# 4. Remove \\ just before the string end (vi - :%s/\\\\\"\,\"/\"\,\"/g)
-# 5. Replace all \" not preceded by alphabets or space with "in"
-#    (vi - :%s/\([^a-zA-Z ]\)\\\"/\1in/g)
-# 6. Replace all \" preceded by a number and a space with "in"
-#    (vi - :%s/\([0-9]\) \\\"/\1in/g)
-# 7. Remove all \" (vi - :%s/\\\"//g)
-resources <- read_csv("opendata_resources.csv") 
-# Filter out resources for projects posted in 2014
+donations <- donations %>%
+  mutate(donation_timestamp = as_date(donation_timestamp))
+
+# Filter out projects that were posted in 2014
+projects <- projects %>% filter(year(date_posted) == 2014)
+
+# Select resources, donations and essays associated with
+# 
 resources <- resources %>%
   semi_join(projects, by = "_projectid")
-# Save data to csv file
-write_csv(resources, "data/opendata_resources_2014.csv")
-# Zip datafile to make it easier to checkin to git
-zip("data/opendata_resources_2014.zip", "data/opendata_resources_2014.csv")
-
-# Donations file cleanup
-# Data cleanup was done in vi after realizing that piping commands to sed
-# was taking too long
-# Sequence of steps for data clean in vi
-# 1. Add newline after donation_message 
-#    (vi - :%s/donation_message/donation_message-vctrl-m/g)
-# 2. Replace all quoted ctrl-Ms (vi- :%s/\\ctrl-vctrl-m\\//g
-# 3. Removed all \\ at the end of string, so that we can replace 
-#    quoted double quotes (vi - :%s/\\\\\"\_$/\"/g)
-# 4. Removed all double backslashes that are in a string by itself
-#    (vi - :%s/\\\\\"/\"/g)
-# 5. Replace quoted double quotes with quoted single quotes
-#    (vi - :%s/\\\"/\\\'/g)
-# 6. Remove all quoted commas (vi- :%s/\\\,//g)
-
-# Read in cleaned up donations data
-donations <- read_csv("opendata_donations.csv") 
-# Filter out donations for projects posted in 2014
 donations <- donations %>%
   semi_join(projects, by = "_projectid")
-# Split donations into two
-donations_split <- split(donations, month(donations$donation_timestamp) < 7)
-# Save data to separate csv files
-write_csv(donations_split$"TRUE", "data/opendata_donations_2014-1.csv")
-write_csv(donations_split$"FALSE", "data/opendata_donations_2014-2.csv")
-# Zip datafile to make it easier to checkin to git
-zip("data/opendata_donations_2014-1.zip",
-    "data/opendata_donations_2014-1.csv")
-zip("data/opendata_donations_2014-2.zip",
-    "data/opendata_donations_2014-2.csv")
+essays <- essays %>%
+  semi_join(projects, by = "_projectid")
+
+# Save filtered data to disk
+writeToDisk(df=projects, path="data/opendata_2014_projects")
+writeToDisk(df=resources, path="data/opendata_2014_resources")
+writeToDisk(df=donations, path="data/opendata_2014_donations")
+writeToDisk(df=essays, path="data/opendata_2014_essays")
+
+# Let us clean all the variables so as to be able to start 
+# with a clean slate
+rm(projects, resources, donations, essays, 
+   types_list, needs_cleanup, retrieveData, writeToDisk)
+
+# Cleanup memory
+gc()
 ```
+
+## Step 2: Data Upload from disk
+
+This is where we would start after the initial data retrieval. We need to load the data from the RDS files in the data folder
+
+```{r, warning=FALSE}
+
+# Create function to load data into a dataframe (named by "kind" of data)
+# from the rds files. Files are identified using pattern matching on 
+# "kind"
+uploadData <- function(kind) {
+  temp <- list.files(path = "data", 
+                    pattern = paste0(".*", kind, ".*rds.gz"),
+                    full.names = TRUE)
+  # Read in the data
+  tables <- lapply(temp, read_rds)
+  # Combine multiple (or single) dataframes into one and assign
+  # the name based on "kind"
+  assign(kind, bind_rows(tables), envir=globalenv())
+}
+
+# Create of list of the kind of data we want to read in
+types_list = c("projects", "resources", "donations", "essays")
+
+# Upload data from the RDS files in the data 
+for (type in types_list) {
+  uploadData(type)
+}
+
+```
+
+## Data Visualization & Analysis
+
+```{r}
+
+myStackedBarChart <-function(colname) {
+  # Create percentage of funding status grouped by colname
+  data <- projects %>%
+    group_by_(colname) %>%
+    summarize(completed = mean(funding_status == "completed", na.rm=TRUE),
+      expired = mean(funding_status == "expired", na.rm=TRUE),
+      reallocated = mean(funding_status == "reallocated", na.rm=TRUE)) %>%
+    melt(variable.name = "funding_type", value.name = "funding_pct")
+  
+  # Created a stacked bar chart
+  data %>%
+    arrange_(colname, ~desc(funding_type)) %>%
+    ggplot(aes(x=get(colname),
+               y=funding_pct, 
+               fill = funding_type)) +
+    geom_bar(stat="identity") +
+    xlab(colname) +
+    scale_fill_manual(values=c("green", "red", "blue")) +
+    theme(legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8),
+          legend.key.size = unit(0.25, "cm")) +
+    coord_flip()
+}
+
+# Identify columns we wanted to create to split into goups.
+plot_columns <- c("school_state", "poverty_level", "primary_focus_area",
+                  "resource_type", "grade_level")
+plot_list <- lapply(plot_columns, FUN = myStackedBarChart)
+
+# Create the layout, give extra space for school_state
+lmat <- rbind(c(1,2),
+              c(1,3),
+              c(4,5))
+# Layout the plots in one grid
+grid.arrange(grobs = plot_list, layout_matrix = lmat,
+             top = "Relation b/w different factors and funding")
+
+```
+
+## Try some text mining
+
+```{r, warning=FALSE}
+library(tidytext)
+
+# Tokenize the essay and remove stop words and include all
+# all alphabetic words
+essays_tokenized <- essays %>%
+  select(`_projectid`, `_teacherid`, essay) %>%
+  unnest_tokens(essay_words,essay)  %>%
+  filter(!essay_words %in% stop_words$word &
+           grepl("^[[:alpha:]]*$", essay_words))
+
+# Get the sentiment lexicon from mrc
+nrc <- sentiments %>%
+    filter(lexicon == "nrc") %>%
+    select(word, sentiment)
+
+# Assign sentiments to words
+essays_sentiments <- essays_tokenized %>%
+    left_join(nrc, by = c("essay_words" = "word"))
+
+# Include the funding_status of the projects
+essays_sentiments <- essays_sentiments %>%
+  left_join(projects, by = "_projectid") %>%
+  select(`_projectid`, funding_status, essay_words, sentiment)
+
+# Count the sentiment frequency
+essays_sentiment_freq <- 
+  essays_sentiments %>%
+  group_by(funding_status, sentiment) %>%
+  summarise(freq = n())
+
+# Plot the sentiment frequency and seperate by funding status
+essays_sentiment_freq %>%
+  filter(funding_status != "reallocated") %>%
+  ggplot(aes(x=sentiment, y = freq, fill = sentiment)) +
+  geom_bar(stat="identity") +
+  facet_grid(~funding_status) +
+  coord_flip()
+  
+# Create word frequency in essays regardless of sentiment 
+# or funding_status
+essays_word_freq <- 
+  essays_sentiments %>%
+  group_by(funding_status, essay_words) %>%
+  summarise(completed_freq = sum(funding_status == "completed"),
+            expired_freq = sum(funding_status == "expired"))
+
+# Create word cloud for funded essays 
+wordcloud(essays_word_freq$essay_words, essays_word_freq$completed_freq,
+          min.freq = 10000)
+
+
+# Create word cloud for expired essays 
+wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
+          min.freq = 10000)
+
+```
+
