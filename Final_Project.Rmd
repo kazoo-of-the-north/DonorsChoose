@@ -38,11 +38,18 @@ Stephen Colbert made the news in 2015 [by funding every teacher's proposal for t
 
 ## Initial Questions: 
 *What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?*
+*What makes the difference between a proposal that is funded and one that expires? 
+*Which are the winning qualities? 
+*Of the predicting qualities, are there any that are under the control of the writer?
+*Does the content of the written essay matter?
 
 ## Data: 
 *Source, scraping method, cleanup, etc.*
 We are using the data made publicly available on the Donors Choose website.
 This data can be found at [here](http://data.donorschoose.org/open-data/overview/).
+
+This is a suggested schema for the recomposition of their open dataset:
+![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
 
 
 ## Exploratory Analysis: 
