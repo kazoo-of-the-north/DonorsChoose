@@ -184,9 +184,11 @@ projects %>% mutate(sintry = asin(percent_funded)) %>% ggplot(aes(x = date_poste
 ```
 
 
-```{r}
+```{r eval=FALSE}
 
 ##MODELING
+
+#This chunk is just trying a numer of things, see next chunk for best model so far
 
 #create column for binary 1=funded, 0 = not funded regression
 projects <- projects %>% mutate(funded = ifelse(funding_status == "completed", 1 , 0))
@@ -242,4 +244,20 @@ mod_fit5 <- train(funded ~ total_price_excluding_optional_support + primary_focu
 
 mod_fit6 <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", family="binomial")
 ```
+
+```{r}
+#modeling start
+
+#split into test and train data sets (90% in train), did not use since train() uses cross correlation itself to calculate RMSE, but could be used in future to double check
+n_test <- round(nrow(projects) / 10)
+test_indices <- sample(1:nrow(projects), n_test, replace=FALSE)
+test <- projects[test_indices,]
+train <- projects[-test_indices,]
+
+#fliter out projects that had lesser used variables that seemed to have an effect
+projects2 <- projects %>% filter(school_year_round == 'f'& school_magnet == 'f'& school_charter == 'f'& school_nlns == 'f'& school_kipp == 'f'& school_charter_ready_promise == 'f'& teacher_teach_for_america == 'f'& teacher_ny_teaching_fellow == 'f')
+
+
+#simple model to start with, but best predictor so far, can just add variables total price and retrain. view model to see RMSE determined by cross correlation.
+model <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", family="binomial")
 
