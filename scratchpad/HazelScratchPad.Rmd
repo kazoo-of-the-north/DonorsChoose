@@ -318,8 +318,8 @@ essays_sentiment_freq %>%
   ggplot(aes(x=sentiment, y = occurance_pct, fill = sentiment)) +
   geom_bar(stat="identity") +
   facet_grid(~funding_status) +
-  theme(text = element_text(size = 10),
-        title = element_text(size = 12),
+  theme(text = element_text(size = 8),
+        title = element_text(size = 10),
         legend.key.size = unit(0.5, "cm"),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   ggtitle('Sentiment Occurance% in Funding Essays') +
@@ -336,10 +336,13 @@ essays_word_freq <-
 # Plot the top 10 words for both funding status
 p1 <- essays_word_freq %>%
   top_n(n=10, wt=completed_freq) %>%
-  ggplot(aes(x=reorder(essay_words, completed_freq), 
+  ggplot(aes(x=reorder(essay_words, completed_freq),
              y = log10(completed_freq))) +
   geom_bar(stat="identity", fill = "blue") +
   ggtitle('Top 10 Words (completed)') +
+  theme(axis.text = element_text(size = 8),
+        axis.title = element_text(size = 10),
+        plot.title = element_text(size = 10)) +
   xlab("essay_words") +
   coord_flip()
 
@@ -349,6 +352,9 @@ p2 <- essays_word_freq %>%
              y = log10(expired_freq))) +
   geom_bar(stat="identity",  fill = "green") +
   ggtitle('Top 10 Words (expired)') +
+  theme(axis.text = element_text(size = 8),
+        axis.title = element_text(size = 10),
+        plot.title = element_text(size = 10)) +
   xlab("essay_words") +
   coord_flip()
 

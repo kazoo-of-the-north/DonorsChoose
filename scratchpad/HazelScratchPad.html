@@ -116,42 +116,10 @@ $(document).ready(function () {
 </div>
 
 
-<pre class="r"><code># Install packages we need just once
-library(devtools)
-devtools::install_github(&quot;juliasilge/tidytext&quot;)
-install.packages(&quot;wordcloud&quot;)</code></pre>
-<pre class="r"><code>library(knitr)
-library(readr)
-library(lubridate)</code></pre>
-<pre><code>## 
-## Attaching package: 'lubridate'</code></pre>
-<pre><code>## The following object is masked from 'package:base':
-## 
-##     date</code></pre>
-<pre class="r"><code>library(dplyr)</code></pre>
-<pre><code>## 
-## Attaching package: 'dplyr'</code></pre>
-<pre><code>## The following objects are masked from 'package:lubridate':
-## 
-##     intersect, setdiff, union</code></pre>
-<pre><code>## The following objects are masked from 'package:stats':
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<pre class="r"><code>library(tidyr)
-library(stringr)
-library(ggplot2)
-library(gridExtra)</code></pre>
-<pre><code>## 
-## Attaching package: 'gridExtra'</code></pre>
-<pre><code>## The following object is masked from 'package:dplyr':
-## 
-##     combine</code></pre>
-<pre class="r"><code>library(wordcloud)</code></pre>
-<pre><code>## Loading required package: RColorBrewer</code></pre>
-<pre class="r"><code>theme_set(theme_bw(base_size = 16))</code></pre>
+<pre class="r"><code># # Install packages we need just once
+# library(devtools)
+# devtools::install_github(&quot;juliasilge/tidytext&quot;)
+# install.packages(&quot;wordcloud&quot;)</code></pre>
 <div id="data-wrangling" class="section level1">
 <h1>Data Wrangling</h1>
 <div id="step-1-data-download-cleanup" class="section level2">
@@ -306,7 +274,8 @@ gc()</code></pre>
 <div id="step-2-data-upload-from-disk" class="section level2">
 <h2>Step 2: Data Upload from disk</h2>
 <p>This is where we would start after the initial data retrieval. We need to load the data from the RDS files in the data folder</p>
-<pre class="r"><code># Create function to load data into a dataframe (named by &quot;kind&quot; of data)
+<pre class="r"><code>opts_knit$set(root.dir = normalizePath('../'))
+# Create function to load data into a dataframe (named by &quot;kind&quot; of data)
 # from the rds files. Files are identified using pattern matching on 
 # &quot;kind&quot;
 uploadData &lt;- function(kind) {
@@ -317,16 +286,53 @@ uploadData &lt;- function(kind) {
   tables &lt;- lapply(temp, read_rds)
   # Combine multiple (or single) dataframes into one and assign
   # the name based on &quot;kind&quot;
-  assign(kind, bind_rows(tables), envir=globalenv())
+  return(bind_rows(tables))
+  #assign(kind, bind_rows(tables), envir=globalenv())
 }
 
 # Create of list of the kind of data we want to read in
 types_list = c(&quot;projects&quot;, &quot;resources&quot;, &quot;donations&quot;, &quot;essays&quot;)
 
-# Upload data from the RDS files in the data 
-for (type in types_list) {
-  uploadData(type)
-}</code></pre>
+projects &lt;- uploadData(&quot;projects&quot;)
+print(projects)</code></pre>
+<pre><code>## Source: local data frame [170,326 x 44]
+## 
+##                          _projectid                  _teacher_acctid
+##                               (chr)                            (chr)
+## 1  0013c81a9dd63c1f6105a6ae4a142602 529787a475c2c53e014a300cd0dcf729
+## 2  02c7bc35161ba1b988e1c04c115c0a6f a73f3c08cbc92234e21a515744fa6571
+## 3  0899b88e9c28d26793af47e3c06cf26e 70cd4cde346f1119ac95add02dfe07c0
+## 4  038fbbffb42416d0ca8ff46dff7ce743 ad539e8f4d9614e2af254481e97814df
+## 5  0c317340d757b09c7a56390cb1b5602e 557b5c4690822d7fd20140c2a22582cd
+## 6  0a89a92fadb414ac19172e889d78fe21 933ddc3b628ce2073c94f3e3fbfc63ba
+## 7  10a706016480821e13ee4673f642da3f c2d68d010c91b92e8e1adc7f9d437e7c
+## 8  0b3cb9e29158ca9c6f4302ae643f80ed ba61b8918e72d8a79534b7faaeea6198
+## 9  1200b446a6ccc476247fce13a64dec96 9bbcbfde04121f48ef69323bb7c1d485
+## 10 0e70042b002fcd2b31a64b314b633335 07ab65e22332d38e7b8ffb3712d7455b
+## ..                              ...                              ...
+## Variables not shown: _schoolid (chr), school_ncesid (chr), school_latitude
+##   (dbl), school_longitude (dbl), school_city (chr), school_state (chr),
+##   school_zip (int), school_metro (chr), school_district (chr),
+##   school_county (chr), school_charter (chr), school_magnet (chr),
+##   school_year_round (chr), school_nlns (chr), school_kipp (chr),
+##   school_charter_ready_promise (chr), teacher_prefix (chr),
+##   teacher_teach_for_america (chr), teacher_ny_teaching_fellow (chr),
+##   primary_focus_subject (chr), primary_focus_area (chr),
+##   secondary_focus_subject (chr), secondary_focus_area (chr), resource_type
+##   (chr), poverty_level (chr), grade_level (chr), vendor_shipping_charges
+##   (dbl), sales_tax (dbl), payment_processing_charges (dbl),
+##   fulfillment_labor_materials (dbl),
+##   total_price_excluding_optional_support (dbl),
+##   total_price_including_optional_support (dbl), students_reached (int),
+##   total_donations (int), num_donors (int),
+##   eligible_double_your_impact_match (chr), eligible_almost_home_match
+##   (chr), funding_status (chr), date_posted (date), date_completed (date),
+##   date_thank_you_packet_mailed (date), date_expiration (date)</code></pre>
+<pre class="r"><code># # Upload data from the RDS files in the data 
+# for (type in types_list) {
+#   uploadData(type)
+# }
+# View(essays)</code></pre>
 </div>
 <div id="data-visualization-analysis" class="section level2">
 <h2>Data Visualization &amp; Analysis</h2>
@@ -367,62 +373,66 @@ lmat &lt;- rbind(c(1,2),
 grid.arrange(grobs = plot_list, layout_matrix = lmat,
              top = &quot;Relation b/w different factors and funding&quot;)</code></pre>
 </div>
-<div id="try-some-test-mining" class="section level2">
-<h2>Try some test mining</h2>
-<pre class="r"><code>library(tidytext)
+<div id="try-some-text-mining" class="section level2">
+<h2>Try some text mining</h2>
+<pre class="r"><code>library(dplyr)
+library(tidyr)
 
-# Tokenize the essay and remove stop words and include all
+View(projects)
+# Tokenize the essay and remove stop words and include only
 # all alphabetic words
-essays_tokenized &lt;- essays %&gt;%
-  select(`_projectid`, `_teacherid`, essay) %&gt;%
-  unnest_tokens(essay_words,essay)  %&gt;%
-  filter(!essay_words %in% stop_words$word &amp;
-           grepl(&quot;^[[:alpha:]]*$&quot;, essay_words))
+# essays_tokenized &lt;- essays %&gt;%
+#   #select(`_projectid`, `_teacherid`, essay) %&gt;%
+#   unnest_tokens(essay_words,essay)  %&gt;%
+#   filter(!essay_words %in% stop_words$word &amp;
+#            grepl(&quot;^[[:alpha:]]*$&quot;, essay_words))
 
-# Get the sentiment lexicon from mrc
-nrc &lt;- sentiments %&gt;%
-    filter(lexicon == &quot;nrc&quot;) %&gt;%
-    select(word, sentiment)
-
-# Assign sentiments to words
-essays_sentiments &lt;- essays_tokenized %&gt;%
-    left_join(nrc, by = c(&quot;essay_words&quot; = &quot;word&quot;))
-
-# Include the funding_status of the projects
-essays_sentiments &lt;- essays_sentiments %&gt;%
-  left_join(projects, by = &quot;_projectid&quot;) %&gt;%
-  select(`_projectid`, funding_status, essay_words, sentiment)
-
-# Count the sentiment frequency
-essays_sentiment_freq &lt;- 
-  essays_sentiments %&gt;%
-  group_by(funding_status, sentiment) %&gt;%
-  summarise(freq = n())
-
-# Plot the sentiment frequency and seperate by funding status
-essays_sentiment_freq %&gt;%
-  filter(funding_status != &quot;reallocated&quot;) %&gt;%
-  ggplot(aes(x=sentiment, y = freq, fill = sentiment)) +
-  geom_bar(stat=&quot;identity&quot;) +
-  facet_grid(~funding_status) +
-  coord_flip()
-  
-# Create word frequency in essays regardless of sentiment 
-# or funding_status
-essays_word_freq &lt;- 
-  essays_sentiments %&gt;%
-  group_by(funding_status, essay_words) %&gt;%
-  summarise(completed_freq = sum(funding_status == &quot;completed&quot;),
-            expired_freq = sum(funding_status == &quot;expired&quot;))
-
-# Create word cloud for funded essays 
-wordcloud(essays_word_freq$essay_words, essays_word_freq$completed_freq,
-          min.freq = 10000)
-
-
-# Create word cloud for expired essays 
-wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
-          min.freq = 10000)</code></pre>
+# # Get the sentiment lexicon from mrc
+# nrc &lt;- sentiments %&gt;%
+#     filter(lexicon == &quot;nrc&quot;) %&gt;%
+#     select(word, sentiment)
+# 
+# # Assign sentiments to words
+# essays_sentiments &lt;- essays_tokenized %&gt;%
+#     left_join(nrc, by = c(&quot;essay_words&quot; = &quot;word&quot;))
+# 
+# # Include the funding_status of the projects
+# essays_sentiments &lt;- essays_sentiments %&gt;%
+#   left_join(projects, by = &quot;_projectid&quot;) %&gt;%
+#   select(`_projectid`, funding_status, essay_words, sentiment)
+# 
+# # Count the sentiment frequency
+# essays_sentiment_freq &lt;- 
+#   essays_sentiments %&gt;%
+#   group_by(funding_status, sentiment) %&gt;%
+#   summarise(freq = n())
+# 
+# # Plot the sentiment frequency and seperate by funding status
+# essays_sentiment_freq %&gt;%
+#   filter(funding_status != &quot;reallocated&quot;) %&gt;%
+#   ggplot(aes(x=sentiment, y = freq, fill = sentiment)) +
+#   geom_bar(stat=&quot;identity&quot;) +
+#   facet_grid(~funding_status) +
+#   theme(legend.text = element_text(size = 6),
+#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+#   coord_flip()
+#   
+# # Create word frequency in essays regardless of sentiment 
+# # or funding_status
+# essays_word_freq &lt;- 
+#   essays_sentiments %&gt;%
+#   group_by(funding_status, essay_words) %&gt;%
+#   summarise(completed_freq = sum(funding_status == &quot;completed&quot;),
+#             expired_freq = sum(funding_status == &quot;expired&quot;))
+# 
+# # Create word cloud for funded essays 
+# wordcloud(essays_word_freq$essay_words, essays_word_freq$completed_freq,
+#           min.freq = 10000)
+# 
+# 
+# # Create word cloud for expired essays 
+# wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
+#           min.freq = 10000)</code></pre>
 </div>
 </div>
 
