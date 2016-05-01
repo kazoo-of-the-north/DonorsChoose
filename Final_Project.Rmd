@@ -753,6 +753,8 @@ mean(expd_total_word_sums$word_count)
 # standard deviation of word count for completed projects of 2014
 sd(expd_total_word_sums$word_count)
 ```
+<a href="#top">back to top</a><br>
+
 ##### Essay word count comparison results 
 ```{r Essay word count comparison results, echo=FALSE}
 # Does essay length matter?
@@ -765,6 +767,7 @@ sprintf("On average, completed essays had essay word counts that were %3.4f %s t
 
 ```
 
+<a href="#top">back to top</a><br>
 
 ## Final Analysis: 
 *What did you learn about the data? How did you answer the questions? How can you justify your answers? *
