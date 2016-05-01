@@ -1,0 +1,203 @@
+//
+//  main.cpp
+//  rm_old
+//
+//  Created by Jim Schlough on 4/22/16.
+//  Copyright © 2016 Jim Schlough. All rights reserved.
+//
+#define BOOST_DATE_TIME_NO_LIB
+
+#include <iostream>
+#include <fstream>    // for ifstream, ofstream
+
+#include <string>
+#include <ctime>
+#include <cstdlib>
+#include <stdio.h>    // for tmpnam, remove
+
+// for time & date processing:
+#include <sstream>
+#include <locale>
+#include <iomanip>
+#include <boost/date_time.hpp>
+#include <boost/date_time/gregorian/greg_date.hpp>
+#include <boost/date_time/gregorian/greg_month.hpp>
+
+using namespace std;
+//using namespace boost::gregorian;
+
+//namespace bt = boost::posix_time;
+
+/*
+const std::locale formats[] = {
+    std::locale(std::locale::classic(),new bt::time_input_facet("%Y-%m-%d %H:%M:%S")),
+    std::locale(std::locale::classic(),new bt::time_input_facet("%Y/%m/%d %H:%M:%S")),
+    std::locale(std::locale::classic(),new bt::time_input_facet("%d.%m.%Y %H:%M:%S")),
+    std::locale(std::locale::classic(),new bt::time_input_facet("%Y-%m-%d"))};
+const size_t formats_n = sizeof(formats)/sizeof(formats[0]);
+
+std::time_t pt_to_time_t(const bt::ptime& pt)
+{
+    bt::ptime timet_start(boost::gregorian::date(1970,1,1));
+    bt::time_duration diff = pt - timet_start;
+    return diff.ticks()/bt::time_duration::rep_type::ticks_per_second;
+    
+}
+void seconds_from_epoch(const std::string& s)
+{
+    bt::ptime pt;
+    for(size_t i=0; i<formats_n; ++i)
+    {
+        std::istringstream is(s);
+        is.imbue(formats[i]);
+        is >> pt;
+        if(pt != bt::ptime()) break;
+    }
+    std::cout << " ptime is " << pt << '\n';
+    std::cout << " seconds from epoch are " << pt_to_time_t(pt) << '\n';
+}
+/*
+int main()
+{
+    seconds_from_epoch("2004-03-21 12:45:33");
+    seconds_from_epoch("2004/03/21 12:45:33");
+    seconds_from_epoch("23.09.2004 04:12:21");
+    seconds_from_epoch("2003-02-11");
+}
+*/
+int main(int argc, const char * argv[]) {
+
+    // insert code here...
+    if (argc< 3 )
+    {
+        std::cout << "Usage rm_old fileInName cutOffDate dateFieldIndex";
+        std::cout << "                                   dateFieldIndex is ONE based";
+    }
+    
+    char filebuf [L_tmpnam];
+    ::strcpy(filebuf, argv[1]);
+    
+    std::string outFileName;
+
+    
+    
+    
+    // TODO: check for clean cutOffDateInput here
+    int64_t cutOffDateValue = 0L;
+    cutOffDateValue = std::atol(argv[2]);
+    
+    // TODO: check for valid (positive integer) date field index (1 based) here
+    
+
+    std::ifstream inputFile (filebuf, std::ios::in);
+    outFileName.append(filebuf);
+    outFileName.erase( outFileName.find(".csv"),4);
+    outFileName.append("_output.csv");
+    
+    std::ofstream outputFile (outFileName, std::ios::out);
+    std::string line, submittedDateTimeStr, submittedDateStr;
+    
+    if (inputFile.is_open())
+    {
+        while( inputFile)
+        {
+            std::getline(inputFile, line);
+            if (line.length() < 2) continue;
+            size_t numberCommas = std::count(line.begin(), line.end(), ',');
+            if (numberCommas < 43 ||
+                line.find("\"") == std::string::npos ) // skip the header line, which has no "
+                continue;
+            
+            // find the position of the date in the 41st field
+            int x = 0;
+            //std::string::size_type
+            int lastPos=0, startOfDatePos = 0, endOfDatePos = 0;
+            int64_t dateIntValue = 0L;
+            
+            // TODO: make magical 39 to be dateFieldIndex in future refinement
+            
+            while (x<43   &&  inputFile.good() ) {
+                lastPos = (int)line.find(',', lastPos+1);
+                if (x==39) // date we seek is in the 41st field
+                {
+                    startOfDatePos = lastPos+2;
+                } else if (startOfDatePos != 0)
+                {
+                    endOfDatePos = (int)line.find(',', startOfDatePos)-1; // ", is end of field, so -1 for " part
+                    break;
+                }
+                x++;
+            }
+            
+            submittedDateTimeStr = line.substr(startOfDatePos, endOfDatePos-startOfDatePos );  ///19);
+            
+            // truncate the hours, minutes and seconds off of the date
+            submittedDateStr = submittedDateTimeStr.substr(0, submittedDateTimeStr.length()-9 );
+            while(submittedDateStr.find('-') != std::string::npos )
+                submittedDateStr = submittedDateStr.erase( submittedDateStr.find('-'), 1);
+            
+            
+            dateIntValue = std::atol(submittedDateStr.c_str());//, std::locale("en_US.utf-8"));
+            
+            if (dateIntValue < cutOffDateValue) continue; // skip to the next record if this one is too early
+            
+            if (outputFile.is_open())
+                outputFile << line << endl;
+            else
+                exit(EXIT_FAILURE);
+            
+            // see:
+            // http://en.cppreference.com/w/cpp/io/manip/get_time
+            //strptime(<#const char *#>, <#const char *#>, <#struct tm *#>)
+            /*
+             std::tm t = {};
+             std::istringstream ss("2011-Februar-18 23:12:34");
+             ss.imbue(std::locale("de_DE.utf-8"));
+             ss >> std::get_time(&t, "%Y-%b-%d %H:%M:%S");
+             if (ss.fail()) {
+             std::cout << "Parse failed\n";
+             } else {
+             std::cout << std::put_time(&t, "%c") << '\n';
+             }
+             */
+            
+            
+            
+            //std::wstring input = (std::wstring)argv[2]; // = L"2011-Februar-18 23:12:34";
+            // see for conversion info:
+            // http://stackoverflow.com/questions/2573834/c-convert-string-or-char-to-wstring-or-wchar-t
+            /*
+            std::wstring input (argv[2], argv[2]+strlen(argv[2]));
+            
+            bt::ptime pt;//(argv[2]);
+            std::tm t = {};
+            
+            std::wistringstream ss(input);
+            
+            ss.imbue(std::locale(std::locale::classic(),new bt::time_input_facet("%Y-%m-%d %H:%M:%S")));//
+            stringstream strAs;
+            strAs <<  argv[2];
+            
+            date dt(from_simple_string(argv[2]));
+            cout << dt << endl;
+            
+            strAs >> pt;
+            std::cout << pt << endl;
+            ss >> std::get_time(&t, L"%Y-%m-%d %H:%M:%S");
+            
+             if (ss.fail()) {
+                std::cout << "Parse failed\n";
+            } else {
+                std::cout << std::put_time(&t, "%c") << '\n';
+            }*/
+
+            
+        }
+        inputFile.close();
+        outputFile.close();
+
+    
+    }
+    
+    return 0;
+}
