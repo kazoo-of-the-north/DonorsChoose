@@ -257,14 +257,6 @@ resources <- uploadData("resources")
 donations <- uploadData("donations")
 essays <- uploadData("essays")
 
-# dplyr wants us the put column names in back-quotes when the name
-# starts with "_". The quotes however causes errors with knitting 
-# So remove all the "_" in the column names 
-names(projects) <- gsub("^_", "", names(projects))
-names(resources) <- gsub("^_", "", names(resources))
-names(donations) <- gsub("^_", "", names(donations))
-names(essays) <- gsub("^_", "", names(essays))
-
 ```
 
 ## Exploratory Analysis: 
@@ -279,7 +271,7 @@ names(essays) <- gsub("^_", "", names(essays))
 # all alphabetic words. All words are lower case, so there is
 # no need to transform
 essays_tokenized <- essays %>%
-  select(projectid, teacherid, essay) %>%
+  select(`_projectid`, `_teacherid`, essay) %>%
   unnest_tokens(essay_words,essay)  %>%
   filter(!essay_words %in% stop_words$word &
            grepl("^[[:alpha:]]*$", essay_words))
@@ -295,8 +287,8 @@ essays_sentiments <- essays_tokenized %>%
 
 # Include the funding_status of the projects
 essays_sentiments <- essays_sentiments %>%
-  left_join(projects, by = "projectid") %>%
-  select(projectid, funding_status, essay_words, sentiment)
+  left_join(projects, by = "_projectid") %>%
+  select(`_projectid`, funding_status, essay_words, sentiment)
 
 # Count the sentiment frequency
 essays_sentiment_freq <-

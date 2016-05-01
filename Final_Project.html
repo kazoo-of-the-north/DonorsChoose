@@ -313,15 +313,7 @@ uploadData &lt;- function(kind) {
 projects &lt;- uploadData(&quot;projects&quot;)
 resources &lt;- uploadData(&quot;resources&quot;)
 donations &lt;- uploadData(&quot;donations&quot;)
-essays &lt;- uploadData(&quot;essays&quot;)
-
-# dplyr wants us the put column names in back-quotes when the name
-# starts with &quot;_&quot;. The quotes however causes errors with knitting 
-# So remove all the &quot;_&quot; in the column names 
-names(projects) &lt;- gsub(&quot;^_&quot;, &quot;&quot;, names(projects))
-names(resources) &lt;- gsub(&quot;^_&quot;, &quot;&quot;, names(resources))
-names(donations) &lt;- gsub(&quot;^_&quot;, &quot;&quot;, names(donations))
-names(essays) &lt;- gsub(&quot;^_&quot;, &quot;&quot;, names(essays))</code></pre>
+essays &lt;- uploadData(&quot;essays&quot;)</code></pre>
 </div>
 </div>
 </div>
@@ -334,7 +326,7 @@ names(essays) &lt;- gsub(&quot;^_&quot;, &quot;&quot;, names(essays))</code></pr
 # all alphabetic words. All words are lower case, so there is
 # no need to transform
 essays_tokenized &lt;- essays %&gt;%
-  select(projectid, teacherid, essay) %&gt;%
+  select(`_projectid`, `_teacherid`, essay) %&gt;%
   unnest_tokens(essay_words,essay)  %&gt;%
   filter(!essay_words %in% stop_words$word &amp;
            grepl(&quot;^[[:alpha:]]*$&quot;, essay_words))
@@ -350,8 +342,8 @@ essays_sentiments &lt;- essays_tokenized %&gt;%
 
 # Include the funding_status of the projects
 essays_sentiments &lt;- essays_sentiments %&gt;%
-  left_join(projects, by = &quot;projectid&quot;) %&gt;%
-  select(projectid, funding_status, essay_words, sentiment)
+  left_join(projects, by = &quot;_projectid&quot;) %&gt;%
+  select(`_projectid`, funding_status, essay_words, sentiment)
 
 # Count the sentiment frequency
 essays_sentiment_freq &lt;-
