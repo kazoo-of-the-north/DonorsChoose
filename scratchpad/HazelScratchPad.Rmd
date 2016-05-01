@@ -5,25 +5,29 @@ date: "April 24, 2016"
 output: html_document
 ---
 
-```{r, eval=FALSE}
-# # Install packages we need just once
-# library(devtools)
-# devtools::install_github("juliasilge/tidytext")
-# install.packages("wordcloud")
+```{r setup, include=FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r echo = FALSE, cache = FALSE}
-#knitr::opts_chunk$set(cache = TRUE, warning = FALSE, message = FALSE)
+```{r, eval=FALSE}
+# Install packages we need just once
+library(devtools)
+devtools::install_github("juliasilge/tidytext")
+install.packages("wordcloud")
+```
 
-library(knitr)
+```{r, echo=FALSE}
+# Load required libraries
+library(ggplot2)
+library(gridExtra)
 library(readr)
 library(lubridate)
+library(tidytext)
 library(dplyr)
 library(tidyr)
 library(stringr)
 library(reshape2)
-library(ggplot2)
-library(gridExtra)
 library(wordcloud)
 theme_set(theme_bw(base_size = 16))
 ```
@@ -40,6 +44,10 @@ This is only run once and not evaluated after that since we can read data from t
 
 
 ```{r, eval=FALSE}
+
+# Need to set the path for knitr since the scratchpad is in a 
+# subdirectory and we are reading from paths relative to main directory 
+opts_knit$set(root.dir = normalizePath('../'))
 
 # Create function to write data frame to zipped rds file
 # The dataframe is split into smaller files depending on size
@@ -191,28 +199,36 @@ gc()
 This is where we would start after the initial data retrieval. We need to load the data from the RDS files in the data folder
 
 ```{r, warning=FALSE}
+# Need to set the path for knitr since the scratchpad is in a 
+# subdirectory and we are reading from paths relative to main directory 
+opts_knit$set(root.dir = normalizePath('..'))
 
-# Create function to load data into a dataframe (named by "kind" of data)
-# from the rds files. Files are identified using pattern matching on 
-# "kind"
+# Create function to load data from the rds files containing the
+# name "kind".
 uploadData <- function(kind) {
-  temp <- list.files(path = "data", 
+  temp <- list.files(path = "./data", 
                     pattern = paste0(".*", kind, ".*rds.gz"),
                     full.names = TRUE)
   # Read in the data
   tables <- lapply(temp, read_rds)
-  # Combine multiple (or single) dataframes into one and assign
-  # the name based on "kind"
-  assign(kind, bind_rows(tables), envir=globalenv())
+  
+  # Combine multiple (or single) dataframes into one and return
+  return (bind_rows(tables))
 }
 
-# Create of list of the kind of data we want to read in
-types_list = c("projects", "resources", "donations", "essays")
+# Read in the different data sets
+projects <- uploadData("projects")
+resources <- uploadData("resources")
+donations <- uploadData("donations")
+essays <- uploadData("essays")
 
-# Upload data from the RDS files in the data 
-for (type in types_list) {
-  uploadData(type)
-}
+# dplyr wants us the put column names in back-quotes when the name
+# starts with "_". The quotes however causes errors with knitting 
+# So remove all the "_" in the column names 
+names(projects) <- gsub("^_", "", names(projects))
+names(resources) <- gsub("^_", "", names(resources))
+names(donations) <- gsub("^_", "", names(donations))
+names(essays) <- gsub("^_", "", names(essays))
 
 ```
 
@@ -262,12 +278,12 @@ grid.arrange(grobs = plot_list, layout_matrix = lmat,
 ## Try some text mining
 
 ```{r, warning=FALSE}
-library(tidytext)
 
-# Tokenize the essay and remove stop words and include all
-# all alphabetic words
+# Tokenize the essay and remove stop words and include only
+# all alphabetic words. All words are lower case, so there is
+# no need to transform
 essays_tokenized <- essays %>%
-  select(`_projectid`, `_teacherid`, essay) %>%
+  select(projectid, teacherid, essay) %>%
   unnest_tokens(essay_words,essay)  %>%
   filter(!essay_words %in% stop_words$word &
            grepl("^[[:alpha:]]*$", essay_words))
@@ -283,39 +299,76 @@ essays_sentiments <- essays_tokenized %>%
 
 # Include the funding_status of the projects
 essays_sentiments <- essays_sentiments %>%
-  left_join(projects, by = "_projectid") %>%
-  select(`_projectid`, funding_status, essay_words, sentiment)
+  left_join(projects, by = "projectid") %>%
+  select(projectid, funding_status, essay_words, sentiment)
 
 # Count the sentiment frequency
-essays_sentiment_freq <- 
+essays_sentiment_freq <-
   essays_sentiments %>%
   group_by(funding_status, sentiment) %>%
-  summarise(freq = n())
+  summarise(sentiment_freq = n()) %>%
+  group_by(funding_status) %>%
+  mutate(occurance_pct = sentiment_freq*100/sum(sentiment_freq)) %>%
+  ungroup()
+  
 
 # Plot the sentiment frequency and seperate by funding status
 essays_sentiment_freq %>%
   filter(funding_status != "reallocated") %>%
-  ggplot(aes(x=sentiment, y = freq, fill = sentiment)) +
+  ggplot(aes(x=sentiment, y = occurance_pct, fill = sentiment)) +
   geom_bar(stat="identity") +
   facet_grid(~funding_status) +
+  theme(text = element_text(size = 10),
+        title = element_text(size = 12),
+        legend.key.size = unit(0.5, "cm"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  ggtitle('Sentiment Occurance% in Funding Essays') +
   coord_flip()
-  
-# Create word frequency in essays regardless of sentiment 
+
+# Compute word frequency in essays regardless of sentiment
 # or funding_status
-essays_word_freq <- 
+essays_word_freq <-
   essays_sentiments %>%
-  group_by(funding_status, essay_words) %>%
+  group_by(essay_words) %>%
   summarise(completed_freq = sum(funding_status == "completed"),
             expired_freq = sum(funding_status == "expired"))
 
-# Create word cloud for funded essays 
+# Plot the top 10 words for both funding status
+p1 <- essays_word_freq %>%
+  top_n(n=10, wt=completed_freq) %>%
+  ggplot(aes(x=reorder(essay_words, completed_freq), 
+             y = log10(completed_freq))) +
+  geom_bar(stat="identity", fill = "blue") +
+  ggtitle('Top 10 Words (completed)') +
+  xlab("essay_words") +
+  coord_flip()
+
+p2 <- essays_word_freq %>%
+  top_n(n=10, wt=expired_freq) %>%
+  ggplot(aes(x=reorder(essay_words, expired_freq), 
+             y = log10(expired_freq))) +
+  geom_bar(stat="identity",  fill = "green") +
+  ggtitle('Top 10 Words (expired)') +
+  xlab("essay_words") +
+  coord_flip()
+
+grid.arrange(p1, p2, nrow=1)
+
+# Students stands out for both "completed" and "expired" projects,
+# So create word clouds without it, to see the rest better
+essays_word_freq <- essays_word_freq %>%
+  filter(essay_words != "students")
+
+# Create word cloud for funded essays
 wordcloud(essays_word_freq$essay_words, essays_word_freq$completed_freq,
-          min.freq = 10000)
+          min.freq = 10000, max.words=100, random.order=TRUE,
+          rot.per=0.35, colors=brewer.pal(8, "Dark2"))
 
 
-# Create word cloud for expired essays 
+# Create word cloud for expired essays
 wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
-          min.freq = 10000)
+          min.freq = 10000, max.words=100, random.order=TRUE,
+          rot.per=0.35, colors=brewer.pal(8, "Dark2"))
 
 ```
 
