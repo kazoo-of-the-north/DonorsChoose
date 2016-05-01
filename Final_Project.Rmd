@@ -2,8 +2,12 @@
 title: "Final Project"
 author: "The Steve Henle, Hazel John, and Jim Schlough Group"
 date: "April 28, 2016"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_depth: 5
 ---
+<a id="top"></a>
 
 ```{r, echo = FALSE}
 library(knitr)
@@ -17,7 +21,6 @@ Hazel John
 Jim Schlough
 
 ## Overview and Motivation: 
-*Provide an overview of the project goals and the motivation for it. Consider that this will be read by people who did not see your project proposal.*
 Funding the contemporary K-12 classroom is greatly challenging and many teachers believe that resources provided are insufficient in meeting the most basic objectives. Nontraditional support is playing an increasingly important part in supporting the modern classroom. 
 
 The Donors Choose web platform provides a mechanism of providing support to teachers by benefactors. A potential donor may read an appeal written by a teacher to fulfill a specific classroom material need, and donates towards their funding goal. If the funding goal is met, these materials are sourced by fulfillment sources under the control of the Donors Choose organization, and sent directly to the school. 
@@ -28,9 +31,9 @@ When written appeals succeed by becoming fully funded, or fail by expiring, the 
 
 We wish to apply statistical analysis of the available data in an effort to go beyond axiomatic and aesthetic beliefs regarding what makes a more or less effective funding proposal. 
 
+<a href="#top">back to top</a><br>
 
 ## Related Work: 
-*Anything that inspired you, such as a paper, a web site, or something we discussed in class.*
 Jim's sister is a grade school art teacher who successfully funded a 3D printer for her classroom. On last report, the best expert for this printer is a female 4th grader.
 
 Steve writes grant proposals, so it is interesting to understand what makes a good grant proposal by way of a data analysis.
@@ -39,8 +42,7 @@ Hazel works with her marketing department on content marketing, personalization 
 
 Stephen Colbert made the news in 2015 [by funding every teacher's proposal for the State of South Carolina](http://time.com/3850694/stephen-colbert-funds-every-teacher-requested-grant-in-south-carolina-schools/). This did rise the national profile of Donors Choose, not only helping all the teachers in South Carolina, but also giving much needed publicity to this cause.
  
-
-
+<a href="#top">back to top</a><br>
 
 ## Initial Questions: 
 *What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?*
@@ -49,18 +51,21 @@ Stephen Colbert made the news in 2015 [by funding every teacher's proposal for t
 *Of the predicting qualities, are there any that are under the control of the writer?
 *Does the content of the written essay matter?
 
+<a href="#top">back to top</a><br>
+
 ## Data: 
-*Source, scraping method, cleanup, etc.*
-We are using the data made publicly available on the Donors Choose website.
+We are using the data made publicly available on the Donors Choose website. This publicly available comes in the form of downloadable csv files, ranging in size from megabytes to gigabytes.
 This data can be found at [here](http://data.donorschoose.org/open-data/overview/).
 
 This is a suggested schema for the recomposition of their open dataset:
 ![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
 
+<a href="#top">back to top</a><br>
+
 
 ### Data Wrangling
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Load required libraries
 library(ggplot2)
 library(gridExtra)
@@ -75,10 +80,152 @@ library(wordcloud)
 theme_set(theme_bw(base_size = 16))
 ```
 
+<a href="#top">back to top</a><br>
 
 #### Step 1: Data Download & Cleanup
 
 Our first task was to download the data, clean it up and extract the data we needed. We decided to do the analysis with just the data from 2014, so the final task was the filter out unneeded data.
+
+<a href="#top">back to top</a><br>
+
+#### rm_old: Our First Data Wrangling Utility 
+
+Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. In this way we were able to separate the 2014 projects records from the csv file and get the rest of the team started with the data. This is the source code for the intermediate c++ application, named rm_old as it removed the records older than 2014 and also 2015 or newer.
+
+<a href="#top">back to top</a><br>
+
+#### c++ Source code for rm_old
+```{r original cpp app, eval=FALSE}
+
+//
+//  main.cpp
+//  rm_old
+//
+//  Created by Jim Schlough on 4/22/16.
+//  Copyright © 2016 Jim Schlough. All rights reserved.
+//
+
+#include <iostream>
+#include <fstream>    // for ifstream, ofstream
+
+#include <string>
+#include <ctime>
+#include <cstdlib>
+#include <stdio.h>    // for tmpnam, remove
+
+// for time & date processing:
+#include <sstream>
+#include <locale>
+#include <iomanip>
+
+using namespace std;
+
+int main(int argc, const char * argv[]) {
+
+    // insert code here...
+    if (argc< 3 )
+    {
+        std::cout << "Usage rm_old fileInName bottomCutOffDate topCutOffDate dateFieldIndex" << endl;
+        std::cout << endl;
+        std::cout << "   dateFieldIndex is ONE based" << endl;
+    }
+    
+    char filebuf [L_tmpnam];
+    ::strcpy(filebuf, argv[1]);
+    
+    std::string outFileName;
+
+    int dateFieldIdx = 0;
+    dateFieldIdx = std::atoi(argv[4])-2;
+    
+    
+    // TODO: check for clean cutOffDateInput here
+    int64_t bottomCutOffDateValue = 0L, topCutOffDateValue = 0L;
+    bottomCutOffDateValue = std::atol(argv[2]);
+    topCutOffDateValue = std::atol(argv[3]);
+    
+    // TODO: check for valid (positive integer) date field index (1 based) here
+    
+
+    std::ifstream inputFile (filebuf, std::ios::in);
+    outFileName.append(filebuf);
+    outFileName.erase( outFileName.find(".csv"),4);
+    outFileName.append("_output.csv");
+    
+    std::ofstream outputFile (outFileName, std::ios::out);
+    std::string line, submittedDateTimeStr, submittedDateStr;
+    bool skipFirst = true;
+    
+    if (inputFile.is_open())
+    {
+        std::getline(inputFile, line);
+        skipFirst = (line.find('\"') == std::string::npos); // first line is  header
+        
+        
+        while( inputFile)
+        {
+            if (skipFirst)
+            {
+                skipFirst = false;
+                outputFile << line << endl;
+            }
+            else std::getline(inputFile, line);
+            
+            if (line.length() < 2) continue;
+            size_t numberCommas = std::count(line.begin(), line.end(), ',');
+            if (numberCommas < 43 ||
+                line.find("\"") == std::string::npos ) // skip the header line, which has no "
+                continue;
+            
+            // find the position of the date in the 41st field
+            int x = 0;
+            //std::string::size_type
+            int lastPos=0, startOfDatePos = 0, endOfDatePos = 0;
+            int64_t dateIntValue = 0L;
+            
+            // TODO: make magical 39 to be dateFieldIndex in future refinement
+            
+            while (x<43   &&  inputFile.good() ) {
+                lastPos = (int)line.find(',', lastPos+1);
+                if (x== (dateFieldIdx)) // date we seek is in the 41st field
+                {
+                    startOfDatePos = lastPos+2;
+                } else if (startOfDatePos != 0)
+                {
+                    endOfDatePos = (int)line.find(',', startOfDatePos)-1; // ", is end of field, so -1 for " part
+                    break;
+                }
+                x++;
+            }
+            
+            submittedDateTimeStr = line.substr(startOfDatePos, endOfDatePos-startOfDatePos );  ///19);
+            
+            // truncate the hours, minutes and seconds off of the date
+            submittedDateStr = submittedDateTimeStr.substr(0, submittedDateTimeStr.length()-9 );
+            while(submittedDateStr.find('-') != std::string::npos )
+                submittedDateStr = submittedDateStr.erase( submittedDateStr.find('-'), 1);
+            dateIntValue = std::atol(submittedDateStr.c_str());//, std::locale("en_US.utf-8"));
+            
+            if (dateIntValue <= bottomCutOffDateValue || dateIntValue >= topCutOffDateValue)
+                continue; // skip to the next record if this one is too early or too late
+            
+            if (outputFile.is_open())
+                outputFile << line << endl;
+            else
+                exit(EXIT_FAILURE);
+        }
+        inputFile.close();
+        outputFile.close();
+    }
+    return 0;
+}
+
+
+```
+<a href="#top">back to top</a><br>
+
+### Data Loader redone in R
+The c++ application made with the source code above was disadvantageous in that it would only run on Macintosh computers, used by 2 out of 3 group members. So this solution was set aside, in favor of the solution presented below, so everyone could run the same dataloader.
 
 We also saved the final data sets to submit as part of the project.
 
@@ -231,6 +378,7 @@ rm(projects, resources, donations, essays,
 gc()
 ```
 
+<a href="#top">back to top</a><br>
 
 #### Step 2: Data Upload from disk
 
@@ -259,10 +407,12 @@ essays <- uploadData("essays")
 
 ```
 
-## Exploratory Analysis: 
-*What visualizations did you use to look at your data in different ways? What are the different statistical methods you considered? Justify the decisions you made, and show any major changes to your ideas. How did you reach these conclusions? *
+<a href="#top">back to top</a><br>
 
-```{r}
+## Exploratory Analysis: 
+We began an exploration of the data to see what relationships might be discovered within it, to compare the completed and expired projects.
+
+```{r echo=FALSE}
 
 #add column to project df called percent_funded that tells the percent money given over asked for
 projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
@@ -377,7 +527,6 @@ projects %>% group_by(teacher_ny_teaching_fellow, funding_status) %>%
   ungroup %>% 
   ggplot(aes(teacher_ny_teaching_fellow, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
 
-
 #primary focus subject
 projects %>% group_by(primary_focus_subject, funding_status) %>% 
   summarise(total= n()) %>% 
@@ -395,7 +544,6 @@ projects %>% group_by(primary_focus_area, funding_status) %>%
   ungroup %>% 
   ggplot(aes(primary_focus_area, percent)) + geom_point(aes(color = funding_status)) + theme(
     axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
-
 
 #resource type
 projects %>% group_by(resource_type, funding_status) %>% summarise(total= n()) %>% 
@@ -443,10 +591,10 @@ projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + 
 
 ```
 
+<a href="#top">back to top</a><br>
 
-#### Text Analysis 
-
-
+#### Text Analysis  
+##### Word Selection Analysis
 ```{r, warning=FALSE}
 
 # Tokenize the essay and remove stop words and include only
@@ -547,10 +695,79 @@ wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
           rot.per=0.35, colors=brewer.pal(8, "Dark2"))
 
 ```
+<a href="#top">back to top</a><br>
+
+#### Essay Length Analysis:  Comparing the word count for completed vs expired projects
+```{r win loss word breakdowns}
+
+# getting some mutually exclusive sets of winning vs losing words
+# total word counts of essays by project
+essay_total_word_sums <- essays %>%
+  select(`_projectid`, essay) %>%
+  unnest_tokens(essay_words,essay) %>%  
+  group_by(`_projectid`)  %>%
+  summarize(word_count= n())  
+
+# just the top records
+head( essay_total_word_sums  %>% arrange( desc(  word_count) ), 10)
+
+# 2014 project count:
+count(projects)$n
+
+# separate out the completed projects
+completed_projects<- projects %>% filter(funding_status=="completed")
+
+# 2014 completed project count:
+count(completed_projects)$n
+
+# get the word count sums of the completed projects
+completed_total_word_sums <- left_join(completed_projects, essay_total_word_sums, by="_projectid")
+
+# average word sum for a completed project in 2014
+mean(completed_total_word_sums$word_count)
+
+# standard deviation of word count for completed projects of 2014
+sd(completed_total_word_sums$word_count)
+
+# separate out the expired projects
+expired_projects<- projects %>% filter(funding_status=="expired")
+
+# 2014 expired project count:
+count( expired_projects)$n
+
+# get the word count sums of the expired projects
+expd_total_word_sums <- left_join(expired_projects, essay_total_word_sums,  by="_projectid")
+
+# number with NA word counts:
+count( expd_total_word_sums %>% filter( is.na(word_count) ))$n
+
+# get rid of the ones with NA word counts: 
+expd_total_word_sums<- expd_total_word_sums %>% filter(! is.na(word_count) )
+
+# 2014 expired project count having word counts:
+count( expd_total_word_sums)$n
+
+# average word sum for a completed project in 2014
+mean(expd_total_word_sums$word_count)
+
+# standard deviation of word count for completed projects of 2014
+sd(expd_total_word_sums$word_count)
+```
+##### Essay word count comparison results 
+```{r Essay word count comparison results, echo=FALSE}
+# Does essay length matter?
+sprintf("For the year 2014, from a total of %d essays: ", count(completed_projects)$n, count(expired_projects)$n)
+sprintf("%d essays were from completed projects and %d essays were from expired projects. ", count(projects)$n, count(completed_projects)$n, count(expired_projects)$n)
+sprintf("All essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(essay_total_word_sums$word_count), sd(essay_total_word_sums$word_count))
+sprintf("Completed essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(completed_total_word_sums$word_count), sd(completed_total_word_sums$word_count))
+sprintf("Expired essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(expd_total_word_sums$word_count), sd(expd_total_word_sums$word_count))
+sprintf("On average, completed essays had essay word counts that were %3.4f %s than expired ones", abs(mean(completed_total_word_sums$word_count) - mean(expd_total_word_sums$word_count)), ifelse(mean(completed_total_word_sums$word_count) > mean(expd_total_word_sums$word_count), "longer", "shorter" ))
+
+```
+
 
 ## Final Analysis: 
-*What did you learn about the data? How did you answer the questions? How can you justify your answers? * 
-
+*What did you learn about the data? How did you answer the questions? How can you justify your answers? *
 
 
 
