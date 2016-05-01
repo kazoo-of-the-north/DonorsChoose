@@ -262,6 +262,188 @@ essays <- uploadData("essays")
 ## Exploratory Analysis: 
 *What visualizations did you use to look at your data in different ways? What are the different statistical methods you considered? Justify the decisions you made, and show any major changes to your ideas. How did you reach these conclusions? *
 
+```{r}
+
+#add column to project df called percent_funded that tells the percent money given over asked for
+projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
+
+#test for normalacy of percent funded
+hist(projects$percent_funded)
+qqnorm(projects$percent_funded)
+print("Data is nowhere near normal, looks like logistic analysis of funded vs non-funded make much more sense.")
+
+print("Will not look at different factors contained in the projects file to determine if they affect the likliehood of getting funded. There are techinically three outcomes for each request. Complete, means reached or succeeded funding goal. Expired, time ran out wihtout reaching goal. Reallocated, Did not reach goal, but donors chose to give previously pledge amount to a different proposal.")
+
+#poverty level graph
+projects %>% group_by(poverty_level, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(poverty_level) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(poverty_level, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+
+#latitude and longitude level graph by amount of goal
+projects %>% ggplot(aes(x = school_latitude, y = percent_funded)) + geom_point() + ylab("Final Status")
+projects %>% ggplot(aes(x = school_longitude, y = percent_funded)) + geom_point() + ylab("Final Status")
+
+#state graph
+projects %>% group_by(school_state, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_state) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(school_state, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+
+#school urban vs rual
+projects %>% group_by(school_metro, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_metro) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(school_metro, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+
+#teacher prefix, sort of a stand in for teacher gender
+projects %>% group_by(teacher_prefix, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(teacher_prefix) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(teacher_prefix, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+#charter school
+projects %>% group_by(school_charter, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_charter) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(school_charter, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+#magnent school
+projects %>% group_by(school_magnet, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_magnet) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(school_magnet, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+#school year round
+projects %>% group_by(school_year_round, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_year_round) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(school_year_round, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+#new Leaders New Schools affiliated 
+projects %>% group_by(school_nlns, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_nlns) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(school_nlns, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+#knowledge is power public charter school (KIPP)
+projects %>% group_by(school_kipp, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_kipp) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(school_kipp, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+#school charter ready promise
+projects %>% group_by(school_charter_ready_promise, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_charter_ready_promise) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(school_charter_ready_promise, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+#teach for america teacher
+projects %>% group_by(teacher_teach_for_america, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(teacher_teach_for_america) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(teacher_teach_for_america, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+#ny teaching fellow
+projects %>% group_by(teacher_ny_teaching_fellow, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(teacher_ny_teaching_fellow) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(teacher_ny_teaching_fellow, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
+
+
+#primary focus subject
+projects %>% group_by(primary_focus_subject, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(primary_focus_subject) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(primary_focus_subject, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+
+#primary focus area
+projects %>% group_by(primary_focus_area, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(primary_focus_area) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(primary_focus_area, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+
+
+#resource type
+projects %>% group_by(resource_type, funding_status) %>% summarise(total= n()) %>% 
+  group_by(resource_type) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
+  ggplot(aes(resource_type, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+
+#grade level
+projects %>% group_by(grade_level, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(grade_level) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(grade_level, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))  + ylab("Final Status")
+
+#total price excluding optional support
+projects %>% ggplot(aes(x = total_price_excluding_optional_support, y = percent_funded)) + geom_smooth()  + ylab("Final Status")
+
+#Might be a good idea to make a histogram of total price, then regraph with just the lower price
+
+#students reached
+projects %>% ggplot(aes(x = students_reached, y = percent_funded)) + geom_smooth() + ylab("Final Status")
+
+#eligible for double your impact match
+projects %>% group_by(eligible_double_your_impact_match, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(eligible_double_your_impact_match) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(eligible_double_your_impact_match, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+
+#eligible for almost home match
+projects %>% group_by(eligible_almost_home_match, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(eligible_almost_home_match) %>% 
+  mutate(totals = sum(total), percent = total/totals) %>% 
+  ungroup %>% 
+  ggplot(aes(eligible_almost_home_match, percent)) + geom_point(aes(color = funding_status)) + theme(
+    axis.text.x=element_text(angle=90, size=8))  + ylab("Final Status")
+
+#date posted
+projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + ylab("Final Status")
+
+```
+
+
 #### Text Analysis 
 
 
