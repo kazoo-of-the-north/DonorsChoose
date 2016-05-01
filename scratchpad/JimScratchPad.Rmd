@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(readr)
 library(dplyr)
+library(ggplot2)
 ```
 
 ## R Markdown
@@ -26,26 +27,36 @@ startTime
 # Hazel's method: 
 # Read in the projects info
 #filename <- "/Users/sov436/courses/E-107/DonorsChoose/opendata_projects.zip"
-setwd("/Users/jimschlough/Documents/Harvard/CSC-E107/Final project/DonorsChoose/data/" )
-projectsFilename <- "opendata_projects_output.csv"
+#setwd("/Users/jimschlough/Documents/Harvard/CSC-E107/Final project/DonorsChoose/data/" )
+projectsFilename <- "/Users/jimschlough/Documents/Harvard/CSC-E107/Final project/DonorsChoose/data/opendata_projects_output.csv"
 #projects <- read_csv(unz(filename, "opendata_projects.csv")) 
-projects <- read_csv(projectsFilename) 
+if (!exists("projects")) { 
+  if (!file.exists(projectsFilename))
+  { 
+    sprintf("File not found: %s", projectsFilename); 
+    stop();
+  }
+  projects <- read_csv(projectsFilename);  
+  }
 projects <- projects %>% filter(date_posted > '2013-12-31' & date_posted < '2015-01-01')
 
 # populate donations
-donationsFilename<-"opendata_donations.csv"
-donations <- read_csv(donationsFilename) 
-# number of donations prior to filtering out only those with 2014 project IDs
-count(donations)
-donations<- donations %>% filter(`_projectid` %in% projects$`_projectid`)
-# number of donations after filtering out only those with 2014 project IDs
-count(donations)
+donationsFilename<-"/Users/jimschlough/Documents/Harvard/CSC-E107/Final project/DonorsChoose/data/opendata_donations.csv"
+if (!exists("donations")) {donations <- read_csv(donationsFilename) }
+# number of donations prior to filtering out only those with 2014 project IDs (should be ~4623094)
+count(donations)$n
+donations<- donations %>% filter(`_projectid` %in% projects$`_projectid`) 
+# number of donations after filtering out only those with 2014 project IDs (should be ~1076489)
+count(donations)$n
 
 # OPTIONAL test out that writing & decompressing and reading RDS file works 
-write_rds(donations, "./opendata_2014_donations.rds.gz", compress = "gz")
-donations<-read_rds( "./opendata_2014_donations.rds.gz") 
-# number of donations after writing & decompressing and reading RDS file 
-count(donations)
+test_rds<-FALSE
+if(test_rds) { 
+  write_rds(donations, "./opendata_2014_donations.rds.gz", compress = "gz") ;
+  donations<-read_rds( "./opendata_2014_donations.rds.gz") ;
+  # number of donations after writing & decompressing and reading RDS file 
+  count(donations)$n
+}
 
 
 # fill resources .... still having problems here
@@ -56,6 +67,11 @@ numberOfRowsToSkip<-0
 resources <- read_csv(resourcesFilename) #, n_max = numberOfRowsToRead )
 
 resources<- resources %>% filter(`_projectid` %in% projects$`_projectid`)
+```
+
+```{r breaking resources out into RDS files, eval=FALSE, echo=FALSE}
+
+# breaking resources out into RDS files:
 write_rds(resources, "./opendata_2014_resources.rds.gz", compress = "gz")
 
 # write out 2 segments for 2014 resources 
@@ -70,22 +86,82 @@ write_rds(resources1of2, "./opendata_2014_resources1of2.rds.gz", compress = "gz"
 write_rds(resources2of2, "./opendata_2014_resources2of2.rds.gz", compress = "gz")
 rm(resources1of2)
 rm(resources2of2)
-
-
 # how to read it back in later: 
 #donations<-read_rds( "./opendata_2014_resources.rds.gz") 
 
-# fill essays 
-essaysFilename <- "./opendata_essays.csv"
-essays <- read_csv(essaysFilename)
-essays <- essays %>% filter( `_projectid` %in% projects$`_projectid`)
+```
 
+
+Loading Essays
+```{r loading essays}
+
+# fill essays 
+essaysFilename <- "/Users/jimschlough/Documents/Harvard/CSC-E107/Final project/DonorsChoose/data/opendata_essays.csv"
+
+if (!exists("essays")) { 
+  if (!file.exists(essaysFilename))
+  { 
+    sprintf("File not found: %s", essaysFilename); 
+    stop();
+  }
+  essays <- read_csv(essaysFilename);  
+} 
+
+essays <- essays %>% filter( `_projectid` %in% projects$`_projectid`)
+```
+
+Writing out Essays RDS file
+```{r Writing out Essays RDS file, eval=FALSE, echo=FALSE}
 # this RDS file ends up being ~193Mb, which is too large to put into our git repository
-#write_rds(essays, "./opendata_2014_essays.rds.gz", compress = "gz")
+write_rds(essays, "./opendata_2014_essays.rds.gz", compress = "gz")
+
 
 ```
 
-```{r  break out set 1}
+
+## Basic data agreement
+Here, we have a look at the total number of projects that were recorded for 2014, as well as the number of essays that appear in the data. This is a sanity check to see how many projects we have that possibly might not have an essay.
+```{r data agreement and total number of projects and essays }
+# number of projects matches number of essays
+numberOfProjects<-count(projects)$n
+numberOfEssays<-count(essays)$n
+if (  numberOfProjects == numberOfEssays)
+{ 
+  print("Number of projects matches number of essays");
+};
+else 
+{
+  print("Number of projects DOES NOT match number of essays, where: ");
+  # specifics of the difference
+  sprintf("The number of projects is: %d while the number of essays is: %d", numberOfProjects, numberOfEssays);
+  # number of projects without an essay:
+  sprintf("So we have %d more projects than essays", numberOfProjects - numberOfEssays)
+};
+
+```
+##Looking at Funding Status
+In the *projects* dataset, we have the *funding_status* variable. The *funding_status* will have one of 3 distinct outcomes: *completed, expired,* or *reallocated*. In order for a project to become funded, it must meet its funding goal within its timeframe or expire. If the project expires and has pledged funds that will no longer be disbursed, these funds will either be returned to the donor, or at the option of the donor they may be reallocated to a different project. This is our interpretation of the policy as stated [here](http://help.donorschoose.org/hc/en-us/articles/201937866-Transferring-donations-from-one-project-to-another).
+
+
+```{r funding status}
+
+# number of distinct outcomes projects had 
+outcome_types<-as.factor(unique(projects$funding_status))
+outcome_types
+
+# overall project completed / expired / reallocated
+ggplot(projects, aes(funding_status)) +
+  geom_bar(aes(color=funding_status, fill=funding_status))
+
+```
+
+# Breakout data into dataset 1-5
+This is where we broke out the data into small enough piece to get it checked in, 
+to make it accessible to anyone trying to run our project. Once we have this data uploaded, we'll
+decide how to integrate it into the final project.
+
+##Breakout dataset 1 
+```{r  break out set 1, eval = FALSE, echo = FALSE }
 # my first try at making smaller segments
 numberOfEssays<-count(essays)$n
 numberOfEssays
@@ -113,7 +189,8 @@ rm(essays1of5)
 
 ```
 
-```{r break out set 2 }
+##Breakout dataset 2 
+```{r break out set 2, eval = FALSE, echo = FALSE }
 # break out set 2 
 essays2of5<-head(essays,roughlyOneFifthOfEssays)
 write_rds(essays2of5, "./opendata_2014_essays2of5.rds.gz", compress = "gz")
@@ -136,8 +213,8 @@ rm(essays2of5)
 
 ```
 
-
-```{r break out set 3 }
+##Breakout dataset 3  
+```{r break out set 3,  eval = FALSE, echo = FALSE }
 # break out set 3 
 essays3of5<-head(essays,roughlyOneFifthOfEssays)
 write_rds(essays3of5, "./opendata_2014_essays3of5.rds.gz", compress = "gz")
@@ -161,8 +238,8 @@ rm(essays3of5)
 
 ```
 
-
-```{r break out set 4 }
+##Breakout dataset 4 
+```{r break out set 4, eval = FALSE, echo = FALSE}
 
 # break out set 4 
 essays4of5<-head(essays,roughlyOneFifthOfEssays)
@@ -183,11 +260,10 @@ count(essays )$n
 
 # optionally remove essays4of5, after we know all the records will make it 
 rm(essays4of5)
-
-
 ```
 
-```{r break out set 5 }
+##Breakout dataset 5
+```{r break out set 5, eval = FALSE, echo = FALSE}
 # break out set 5 is what remains 
 essays5of5<- essays 
 
@@ -208,7 +284,7 @@ rm(essays5of5)
 
 ```
 
-```{r REASSEMBLY TEST  }
+```{r REASSEMBLY TEST, eval = FALSE, echo = FALSE }
 #####
 #
 #  REASSEMBLY TEST
@@ -242,27 +318,6 @@ numberOfEssays
 # ultimate reassembly test passes if true
 numberOfEssays==count(essays)$n
 
-```
-
-```{r garbage code}
-# as of now, the following function remains as garbage I should throw out:
-# fullRead<-TRUE
-# fillResources<- function()
-#   {
-#   while(fullRead)
-#     {
-#       resourcesTemp <- read_csv(resourcesFilename, skip = numberOfRowsToSkip, n_max = numberOfRowsToRead)
-#       numberOfRowsToSkip<- numberOfRowsToSkip + numberOfRowsToRead
-#       fullRead<- count(resourcesTemp)==numberOfRowsToRead
-#       colnames(resourcesTemp)<-colnames(resources)
-#       resourcesTemp<-resourcesTemp %>% filter(`_projectid` %in% projects$`_projectid`)
-#       resources<-rbind(resources, resourcesTemp) 
-#     }
-#   }
-# 
-# fillResources()
-# 
-# count(problems(resources))==0
 ```
 
 
