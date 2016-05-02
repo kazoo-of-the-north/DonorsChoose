@@ -698,7 +698,8 @@ wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
 <a href="#top">back to top</a><br>
 
 #### Essay Length Analysis:  Comparing the word count for completed vs expired projects
-```{r win loss word breakdowns}
+```{r win loss word breakdowns, echo=FALSE}
+if (!require("xtable"))   {install.packages("xtable")}
 
 # getting some mutually exclusive sets of winning vs losing words
 # total word counts of essays by project
@@ -708,64 +709,83 @@ essay_total_word_sums <- essays %>%
   group_by(`_projectid`)  %>%
   summarize(word_count= n())  
 
-# just the top records
-head( essay_total_word_sums  %>% arrange( desc(  word_count) ), 10)
+#word_count_summaries<- colnames(c("Description", "Value"))
+word_count_summaries<-rownames(c("2014 project count",  "2014 completed project count", "2014 completed project word count mean", "2014 completed project word count std dev", "2014 expired project count","word count sums of the expired projects", "word sum mean for expired projects", "word count for expired projects of 2014"))
 
 # 2014 project count:
-count(projects)$n
+project_count_2014<-count(projects)$n
 
 # separate out the completed projects
 completed_projects<- projects %>% filter(funding_status=="completed")
 
 # 2014 completed project count:
-count(completed_projects)$n
+completed_project_count_2014<-count(completed_projects)$n
 
 # get the word count sums of the completed projects
 completed_total_word_sums <- left_join(completed_projects, essay_total_word_sums, by="_projectid")
 
 # average word sum for a completed project in 2014
-mean(completed_total_word_sums$word_count)
+completed_project_mean_word_count<-mean(completed_total_word_sums$word_count)
 
 # standard deviation of word count for completed projects of 2014
-sd(completed_total_word_sums$word_count)
+completed_project_sd_word<-sd(completed_total_word_sums$word_count)
 
 # separate out the expired projects
 expired_projects<- projects %>% filter(funding_status=="expired")
 
 # 2014 expired project count:
-count( expired_projects)$n
+expired_project_count_2014<-count( expired_projects)$n
 
 # get the word count sums of the expired projects
 expd_total_word_sums <- left_join(expired_projects, essay_total_word_sums,  by="_projectid")
 
 # number with NA word counts:
-count( expd_total_word_sums %>% filter( is.na(word_count) ))$n
+exp_na_word_count<-count( expd_total_word_sums %>% filter( is.na(word_count) ))$n
 
 # get rid of the ones with NA word counts: 
 expd_total_word_sums<- expd_total_word_sums %>% filter(! is.na(word_count) )
 
 # 2014 expired project count having word counts:
-count( expd_total_word_sums)$n
+expd_total_word_sums_count<-count( expd_total_word_sums)$n
 
-# average word sum for a completed project in 2014
-mean(expd_total_word_sums$word_count)
+# average word sum for a expired project in 2014
+expd_total_word_sums_mean<-mean(expd_total_word_sums$word_count)
 
-# standard deviation of word count for completed projects of 2014
-sd(expd_total_word_sums$word_count)
+# standard deviation of word count for expired projects of 2014
+expd_total_word_sums_sd<-sd(expd_total_word_sums$word_count)
+
+word_count_summaries<-rbind(word_count_summaries, project_count_2014)
+word_count_summaries<-rbind(word_count_summaries, completed_project_count_2014)
+word_count_summaries<-rbind(word_count_summaries, completed_project_mean_word_count)
+word_count_summaries<-rbind(word_count_summaries, completed_project_sd_word)
+word_count_summaries<-rbind(word_count_summaries, expired_project_count_2014)
+word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_count)
+word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_mean)
+word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_sd )
+ 
+kable(word_count_summaries, digits = 0)
+
 ```
+
 <a href="#top">back to top</a><br>
 
 ##### Essay word count comparison results 
+Does essay word count matter?
+
+Here we look at the number of words in essays, to see if there is any significant difference between the number of words in completed and expired essays.
+
 ```{r Essay word count comparison results, echo=FALSE}
-# Does essay length matter?
-sprintf("For the year 2014, from a total of %d essays: ", count(completed_projects)$n, count(expired_projects)$n)
-sprintf("%d essays were from completed projects and %d essays were from expired projects. ", count(projects)$n, count(completed_projects)$n, count(expired_projects)$n)
-sprintf("All essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(essay_total_word_sums$word_count), sd(essay_total_word_sums$word_count))
-sprintf("Completed essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(completed_total_word_sums$word_count), sd(completed_total_word_sums$word_count))
-sprintf("Expired essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(expd_total_word_sums$word_count), sd(expd_total_word_sums$word_count))
+# Does essay word count matter?
+
+# sprintf("For the year 2014, from a total of %d essays: ", count(completed_projects)$n, count(expired_projects)$n)
+# sprintf("%d essays were from completed projects and %d essays were from expired projects. ", count(projects)$n, count(completed_projects)$n, count(expired_projects)$n)
+# sprintf("All essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(essay_total_word_sums$word_count), sd(essay_total_word_sums$word_count))
+# sprintf("Completed essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(completed_total_word_sums$word_count), sd(completed_total_word_sums$word_count))
+# sprintf("Expired essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(expd_total_word_sums$word_count), sd(expd_total_word_sums$word_count))
 sprintf("On average, completed essays had essay word counts that were %3.4f %s than expired ones", abs(mean(completed_total_word_sums$word_count) - mean(expd_total_word_sums$word_count)), ifelse(mean(completed_total_word_sums$word_count) > mean(expd_total_word_sums$word_count), "longer", "shorter" ))
 
 ```
+The length of essay, in terms of word count, does not seem to matter much all by itself.
 
 <a href="#top">back to top</a><br>
 
