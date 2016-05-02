@@ -763,7 +763,7 @@ word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_count)
 word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_mean)
 word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_sd )
  
-kable(word_count_summaries, digits = 0)
+kable(word_count_summaries, digits = 0, caption = "Essay Word Counts")
 
 ```
 
