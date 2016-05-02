@@ -77,6 +77,7 @@ library(tidyr)
 library(stringr)
 library(reshape2)
 library(wordcloud)
+library(caret)
 theme_set(theme_bw(base_size = 16))
 ```
 
@@ -590,6 +591,56 @@ projects %>% group_by(eligible_almost_home_match, funding_status) %>%
 projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + ylab("Final Status")
 
 ```
+
+#### Building a preditction model for proposal success
+
+The first attempt to build a model was to use the glm method in the train function and select several variables from the earlier exploratory analysis that looked to have an effect. These variables included: amount of money asked for, school state, primary focus, primary subject, resource type, date posted. We used glm because our outcome is either funded or not funded and glm works well for logistic regression.
+
+```{r}
+#create column for binary 1 = funded, 0 = not funded regression
+projects <- projects %>% mutate(funded = ifelse(funding_status == "completed", 1 , 0))
+
+fit_selected_components <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + school_charter + primary_focus_subject + students_reached + school_state + resource_type + date_posted,  data=projects, method="glm", family="binomial")
+
+fit_selected_components
+
+```
+
+The RMSE from this method is not great, but it is a start so we tried to improve on it. First we filtered out some of the uncommon variables, that appeared to have an effect in the exploratory analysis. For example if the teacher was in teacher in teach for America, a New York teach fellow, was it a charter school, or other school types. All total these only filtered out few percent of the applications, and are factors the requesters can't change so they are not useful in building a prediction model. We then ran the training again.
+
+```{r}
+
+#fliter out less used variables
+projects2 <- projects %>% filter(school_year_round == 'f'& school_magnet == 'f'& school_charter == 'f'& school_nlns == 'f'& school_kipp == 'f'& school_charter_ready_promise == 'f'& teacher_teach_for_america == 'f'& teacher_ny_teaching_fellow == 'f')
+
+#run train again
+fit_selected_components_filtered <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + primary_focus_subject + students_reached + school_state + resource_type + date_posted,  data=projects2, method="glm", family="binomial")
+
+fit_selected_components_filtered
+
+```
+
+Removing these proposals did show an effect in an improvement of RMSE, even though it is . The next approach was that perhaps our model was trying to fit to many parameters, so we pared it down to only include the factors that the exploratory analysis showed to have the greatest effect. These factors were: cost, date of posting, and resource type.
+
+```{r}
+#run train again using most selective variables
+fit_more_selective_components <- train(funded ~ total_price_excluding_optional_support +  date_posted + resource_type,  data=projects2, method="glm", family="binomial")
+
+fit_more_selective_components
+
+```
+
+This shows an even greater improvement in RMSE. In looking back at the data it was clear that the cost requested has the strongest effect. So we decided to run train again to see if that variable alone might improve our accurary (as shown by RMSE).
+
+
+```{r}
+fit_cost_only <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", family="binomial")
+
+fit_cost_only
+
+```
+
+So using all the data, except the contents of the essay, provided by the requesters it appears that the best model we can build is using the total cost as a predictor.
 
 <a href="#top">back to top</a><br>
 
