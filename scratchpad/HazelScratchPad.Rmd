@@ -225,10 +225,10 @@ essays <- uploadData("essays")
 # dplyr wants us the put column names in back-quotes when the name
 # starts with "_". The quotes however causes errors with knitting 
 # So remove all the "_" in the column names 
-names(projects) <- gsub("^_", "", names(projects))
-names(resources) <- gsub("^_", "", names(resources))
-names(donations) <- gsub("^_", "", names(donations))
-names(essays) <- gsub("^_", "", names(essays))
+# names(projects) <- gsub("^_", "", names(projects))
+# names(resources) <- gsub("^_", "", names(resources))
+# names(donations) <- gsub("^_", "", names(donations))
+# names(essays) <- gsub("^_", "", names(essays))
 
 ```
 
@@ -275,6 +275,114 @@ grid.arrange(grobs = plot_list, layout_matrix = lmat,
 
 ```
 
+Do some more EDA
+
+```{r}
+# First check the distribution of funding status
+projects %>% ggplot(aes(x=factor(funding_status), y=..count..)) +
+  geom_bar(stat = "count", fill="blue")
+x <- projects %>% filter((funding_status == "expired") &
+        (floor(total_price_excluding_optional_support) <= total_donations))
+
+x <- projects %>% filter(floor(total_price_excluding_optional_support) > total_donations) %>% select(`_projectid`, `_teacherid`, total_price_excluding_optional_support, total_donations, funding_status)
+
+# Inorder to use PCA to analyze the project funding factors, we need to 
+# first make a lot of the categorical columns into numberic. 
+# Start by creating category tables with ranks for all the variables
+
+# Create a numeric mapping for project_id, grade_levels, resource_types,
+# poverty_levels, primary_focus_areas, metro_type, teacher_prefix 
+# and US States
+project_ids <- data.frame(
+                  projectid = unique(projects$`_projectid`), 
+                  pid = rank(unique(projects$`_projectid`)))
+grade_levels <- data.frame(
+                  grade_level = unique(projects$grade_level), 
+                  grade_id = rank(unique(projects$grade_level)))
+resource_types <- data.frame(
+                  resource_type = unique(projects$resource_type), 
+                  resource_id = rank(unique(projects$resource_type)))
+poverty_levels <- data.frame(
+                  poverty_level = unique(projects$poverty_level), 
+                  poverty_id = rank(unique(projects$poverty_level)))
+primary_focus_areas <- data.frame(
+                  primary_focus_area = unique(projects$primary_focus_area),
+                  pfa_id = rank(unique(projects$primary_focus_area)))
+school_metros <- data.frame(
+                  school_metro = unique(projects$school_metro), 
+                  metro_id = rank(unique(projects$school_metro)))
+teacher_prefixes <- data.frame(
+                  teacher_prefix = unique(projects$teacher_prefix), 
+                  prefix_id = rank(unique(projects$teacher_prefix)))
+# The data includes Washington DC as a state, so create our own IDs too
+usa_states <- data.frame(
+                  school_state = unique(projects$school_state),
+                  state_id = rank(unique(projects$school_state)))
+
+# Create a dataframe from projects having only numeric values 
+# (except t/f which will be converted later). Use the month
+# of date_posted, instead of date as a factor
+# Also excluded the following columns
+#  - fulfillment_labor_materials - it is always 30
+#  - all school location information except state, since factors like
+#    metro, poverty level etc. would already contain relevant info
+#  - primary_focus_subject - primary focus area is included
+#  - processing charge, shipping charge (these are probaby 
+#    related resource type which is incuded)
+#  - all dates - date posted, date completed, 
+projects_factored <- projects %>%
+  mutate(fully_funded =
+           ifelse(floor(total_price_excluding_optional_support) <
+                    total_donations, 1, 0),
+         students_reached =
+           ifelse(is.na(students_reached), 0, students_reached),
+         month_posted = month(date_posted)) %>%
+  mutate(fundedness = ifelse(funding_status == "completed", 1, 0)) %>%
+  mutate(funds_needed =round((total_price_excluding_optional_support -
+                          total_donations), 0)) %>%
+  left_join(project_ids, by = c("_projectid" = "projectid")) %>%
+  left_join(grade_levels, by = "grade_level") %>%
+  left_join(resource_types, by = "resource_type") %>%
+  left_join(poverty_levels, by = "poverty_level") %>%
+  left_join(primary_focus_areas, by = "primary_focus_area") %>%
+  left_join(school_metros, by = "school_metro") %>%
+  left_join(teacher_prefixes, by = "teacher_prefix") %>%
+  left_join(usa_states, by = "school_state") %>%
+  select(pid, state_id, metro_id, school_charter,
+         school_magnet, school_year_round, school_nlns,
+         school_kipp, school_charter_ready_promise, prefix_id,
+         teacher_teach_for_america, teacher_ny_teaching_fellow,
+         pfa_id, resource_id, poverty_id, grade_id,
+         total_price_excluding_optional_support,
+         total_price_including_optional_support, 
+         students_reached,
+         num_donors, eligible_double_your_impact_match,
+         eligible_almost_home_match, month_posted,
+         funds_needed,
+         fully_funded, fundedness)
+
+# Convert all the t/f to 0/1 respectively
+projects_factored[projects_factored == "t"] <- 1
+projects_factored[projects_factored == "f"] <- 0
+
+# Convert the projects_factored data frame into a matrix
+projects_mat <- as.matrix(projects_factored[,-1:23])
+rownames(projects_mat) <- as.numeric(projects_factored$pid)
+
+# Make sure the factors were converted to nummeric
+mode(projects_mat) <- "numeric" 
+
+# Do the PCA Analysis
+pca <- prcomp(projects_mat)
+print(pca)
+
+plot(pca, type = "l")
+summary(pca)$importance[,1:5]
+
+plot(pca$sdev)
+plot(pca$sdev^2/sum(pca$sdev^2))
+```
+
 ## Try some text mining
 
 ```{r, warning=FALSE}
@@ -283,7 +391,7 @@ grid.arrange(grobs = plot_list, layout_matrix = lmat,
 # all alphabetic words. All words are lower case, so there is
 # no need to transform
 essays_tokenized <- essays %>%
-  select(projectid, teacherid, essay) %>%
+  select(`_projectid`, `_teacherid`, essay) %>%
   unnest_tokens(essay_words,essay)  %>%
   filter(!essay_words %in% stop_words$word &
            grepl("^[[:alpha:]]*$", essay_words))
@@ -299,8 +407,8 @@ essays_sentiments <- essays_tokenized %>%
 
 # Include the funding_status of the projects
 essays_sentiments <- essays_sentiments %>%
-  left_join(projects, by = "projectid") %>%
-  select(projectid, funding_status, essay_words, sentiment)
+  left_join(projects, by = "_projectid") %>%
+  select(`_projectid`, funding_status, essay_words, sentiment)
 
 # Count the sentiment frequency
 essays_sentiment_freq <-
