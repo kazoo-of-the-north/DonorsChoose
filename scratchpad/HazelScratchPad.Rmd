@@ -330,7 +330,7 @@ usa_states <- data.frame(
 #  - processing charge, shipping charge (these are probaby 
 #    related resource type which is incuded)
 #  - all dates - date posted, date completed, 
-projects_factored <- projects %>%
+projects.factored <- projects %>%
   mutate(fully_funded =
            ifelse(floor(total_price_excluding_optional_support) <
                     total_donations, 1, 0),
@@ -338,9 +338,8 @@ projects_factored <- projects %>%
            ifelse(is.na(students_reached), 0, students_reached),
          month_posted = month(date_posted)) %>%
   mutate(fundedness = ifelse(funding_status == "completed", 1, 0)) %>%
-  mutate(funds_needed =round((total_price_excluding_optional_support -
-                          total_donations), 0)) %>%
-  left_join(project_ids, by = c("_projectid" = "projectid")) %>%
+  mutate(funded_pct = (total_price_excluding_optional_support/
+                          total_donations)) %>%
   left_join(grade_levels, by = "grade_level") %>%
   left_join(resource_types, by = "resource_type") %>%
   left_join(poverty_levels, by = "poverty_level") %>%
@@ -348,39 +347,61 @@ projects_factored <- projects %>%
   left_join(school_metros, by = "school_metro") %>%
   left_join(teacher_prefixes, by = "teacher_prefix") %>%
   left_join(usa_states, by = "school_state") %>%
-  select(pid, state_id, metro_id, school_charter,
+  select(`_projectid`, state_id, metro_id, school_charter,
          school_magnet, school_year_round, school_nlns,
          school_kipp, school_charter_ready_promise, prefix_id,
          teacher_teach_for_america, teacher_ny_teaching_fellow,
          pfa_id, resource_id, poverty_id, grade_id,
-         total_price_excluding_optional_support,
-         total_price_including_optional_support, 
          students_reached,
+         total_price_excluding_optional_support,
          num_donors, eligible_double_your_impact_match,
          eligible_almost_home_match, month_posted,
-         funds_needed,
          fully_funded, fundedness)
 
 # Convert all the t/f to 0/1 respectively
-projects_factored[projects_factored == "t"] <- 1
-projects_factored[projects_factored == "f"] <- 0
+projects.factored[projects.factored == "t"] <- 1
+projects.factored[projects.factored == "f"] <- 0
 
 # Convert the projects_factored data frame into a matrix
-projects_mat <- as.matrix(projects_factored[,-1:23])
-rownames(projects_mat) <- as.numeric(projects_factored$pid)
+projects.matrix <- as.matrix(projects.factored[,2:22])
+rownames(projects.matrix) <- projects.factored$pid
 
 # Make sure the factors were converted to nummeric
-mode(projects_mat) <- "numeric" 
+mode(projects.matrix) <- "numeric" 
 
-# Do the PCA Analysis
-pca <- prcomp(projects_mat)
-print(pca)
+# Do the PCA Analysis.We have a combination of categorical variables,
+# discrete variables and continuous variables with a large percentage
+# of them being categorical. This create a big difference is variance
+# between the different fields. So we use scale = TRUE which causes the
+# analysis to be based on correlation instead of covariance. 
+# We also use center=TRUE (default) such that the data is both centered
+# and scaled
+projects.pca <- prcomp(projects.matrix, scale=TRUE)
 
-plot(pca, type = "l")
-summary(pca)$importance[,1:5]
+plot(projects.pca, type = "l")
+summary(projects.pca)$importance[,1:15]
 
-plot(pca$sdev)
-plot(pca$sdev^2/sum(pca$sdev^2))
+plot(projects.pca$sdev)
+
+projects.pca2 <- prcomp(projects.matrix, scale=TRUE, center=FALSE)
+
+plot(projects.pca2, type = "l")
+summary(projects.pca2)$importance[,1:15]
+
+plot(projects.pca2$sdev)
+
+rt <- projects.factored %>% 
+  left_join(resource_types, by = "resource_id") %>%
+  select(resource_type)
+ss <- projects.factored %>% 
+  left_join(usa_states, by = "state_id") %>%
+  select(school_state)
+plot( projects.pca$x[,1:2], bg=rt$resource_type, pch=21)
+plot( projects.pca$x[,1:2], bg=ss$school_state, pch=21)
+
+projects.princomp <- princomp(projects.matrix, cor=T)
+summary(projects.princomp, loadings=T)
+
 ```
 
 ## Try some text mining
