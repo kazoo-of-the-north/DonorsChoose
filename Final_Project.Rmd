@@ -9,7 +9,7 @@ output:
 ---
 <a id="top"></a>
 
-```{r, echo = FALSE}
+```{r echo = FALSE}
 library(knitr)
 opts_chunk$set(cache = TRUE, message = FALSE)
 ```
@@ -38,7 +38,7 @@ Jim's sister is a grade school art teacher who successfully funded a 3D printer 
 
 Steve writes grant proposals, so it is interesting to understand what makes a good grant proposal by way of a data analysis.
 
-Hazel works with her marketing department on content marketing, personalization etc. She in interested in understanding what motivates prospects to become customers, in this case prospects becomes benefactors.
+Hazel works with her marketing department on content marketing, personalization etc. She in interested in understanding what motivates prospects to become customers. In this case we analyze factors that encourage prospects to turn into benefactors.
 
 Stephen Colbert made the news in 2015 [by funding every teacher's proposal for the State of South Carolina](http://time.com/3850694/stephen-colbert-funds-every-teacher-requested-grant-in-south-carolina-schools/). This did rise the national profile of Donors Choose, not only helping all the teachers in South Carolina, but also giving much needed publicity to this cause.
  
@@ -65,7 +65,7 @@ This is a suggested schema for the recomposition of their open dataset:
 
 ### Data Wrangling
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Load required libraries
 library(ggplot2)
 library(gridExtra)
@@ -225,14 +225,19 @@ int main(int argc, const char * argv[]) {
 ```
 <a href="#top">back to top</a><br>
 
-### Data Loader redone in R
-The c++ application made with the source code above was disadvantageous in that it would only run on Macintosh computers, used by 2 out of 3 group members. So this solution was set aside, in favor of the solution presented below, so everyone could run the same dataloader.
+### Data Wrangling in R
 
-We also saved the final data sets to submit as part of the project.
+During analysis of the data files retrieved from the Donor's Choose website, we noticed that it contained string fields with special characters that caused errors when using the standard read utilities for comma delimited files. The first plan was to read files line by line and use "gsub" to removed unnecessary characters, but this turned out very slow. We then tried to run the UNIX utility "sed" within the "pipe" function, but the special characters like ctrl-M made that problematic. The final iteration still used "sed" by was run as a system call from R. Each file required slight variations in the search patterns so different <datatype>_clnup.sed scripts were created for each. 
 
-This is only run once and not evaluated after that since we can read data from the filtered data files directly.
+Our final data wrangling consisted of the following steps:
+* Data download from the website, 
+* Cleanup via "sed" with a  system call
+* Extraction of CSV as a dataframe
+* Filtering out projects not posted in 2014
+* Storing cleaned dataframes as RDS files
 
-```{r, eval=FALSE}
+
+```{r eval=FALSE, echo=FALSE}
 
 # Create function to write data frame to zipped rds file
 # The dataframe is split into smaller files depending on size
@@ -383,9 +388,9 @@ gc()
 
 #### Step 2: Data Upload from disk
 
-This is where we would start after the initial data retrieval. We need to load the data from the RDS files in the data folder
+A simple function was written to upload the cleaned data from RDS files stored on disk.  All data exploration and analysis was run on the uploaded data.
 
-```{r, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 
 # Create function to load data from the rds files containing the
 # name "kind".
@@ -413,7 +418,7 @@ essays <- uploadData("essays")
 ## Exploratory Analysis: 
 We began an exploration of the data to see what relationships might be discovered within it, to compare the completed and expired projects.
 
-```{r echo=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 
 #add column to project df called percent_funded that tells the percent money given over asked for
 projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
@@ -596,7 +601,7 @@ projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + 
 
 The first attempt to build a model was to use the glm method in the train function and select several variables from the earlier exploratory analysis that looked to have an effect. These variables included: amount of money asked for, school state, primary focus, primary subject, resource type, date posted. We used glm because our outcome is either funded or not funded and glm works well for logistic regression.
 
-```{r}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 #create column for binary 1 = funded, 0 = not funded regression
 projects <- projects %>% mutate(funded = ifelse(funding_status == "completed", 1 , 0))
 
@@ -608,7 +613,7 @@ fit_selected_components
 
 The RMSE from this method is not great, but it is a start so we tried to improve on it. First we filtered out some of the uncommon variables, that appeared to have an effect in the exploratory analysis. For example if the teacher was in teacher in teach for America, a New York teach fellow, was it a charter school, or other school types. All total these only filtered out few percent of the applications, and are factors the requesters can't change so they are not useful in building a prediction model. We then ran the training again.
 
-```{r}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 
 #fliter out less used variables
 projects2 <- projects %>% filter(school_year_round == 'f'& school_magnet == 'f'& school_charter == 'f'& school_nlns == 'f'& school_kipp == 'f'& school_charter_ready_promise == 'f'& teacher_teach_for_america == 'f'& teacher_ny_teaching_fellow == 'f')
@@ -622,7 +627,7 @@ fit_selected_components_filtered
 
 Removing these proposals did show an effect in an improvement of RMSE, even though it is . The next approach was that perhaps our model was trying to fit to many parameters, so we pared it down to only include the factors that the exploratory analysis showed to have the greatest effect. These factors were: cost, date of posting, and resource type.
 
-```{r}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 #run train again using most selective variables
 fit_more_selective_components <- train(funded ~ total_price_excluding_optional_support +  date_posted + resource_type,  data=projects2, method="glm", family="binomial")
 
@@ -633,7 +638,7 @@ fit_more_selective_components
 This shows an even greater improvement in RMSE. In looking back at the data it was clear that the cost requested has the strongest effect. So we decided to run train again to see if that variable alone might improve our accurary (as shown by RMSE).
 
 
-```{r}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 fit_cost_only <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", family="binomial")
 
 fit_cost_only
@@ -646,7 +651,7 @@ So using all the data, except the contents of the essay, provided by the request
 
 #### Text Analysis  
 ##### Word Selection Analysis
-```{r, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 
 # Tokenize the essay and remove stop words and include only
 # all alphabetic words. All words are lower case, so there is
@@ -749,7 +754,7 @@ wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
 <a href="#top">back to top</a><br>
 
 #### Essay Length Analysis:  Comparing the word count for completed vs expired projects
-```{r win loss word breakdowns, echo=FALSE}
+```{r win loss word breakdowns, echo=FALSE, message=FALSE, warning=FALSE}
 if (!require("xtable"))   {install.packages("xtable")}
 
 # getting some mutually exclusive sets of winning vs losing words
@@ -825,7 +830,7 @@ Does essay word count matter?
 
 Here we look at the number of words in essays, to see if there is any significant difference between the number of words in completed and expired essays.
 
-```{r Essay word count comparison results, echo=FALSE}
+```{r Essay word count comparison results, message=FALSE, warning=FALSE, echo=FALSE}
 # Does essay word count matter?
 
 # sprintf("For the year 2014, from a total of %d essays: ", count(completed_projects)$n, count(expired_projects)$n)
