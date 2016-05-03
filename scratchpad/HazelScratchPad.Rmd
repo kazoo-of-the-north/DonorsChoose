@@ -401,7 +401,6 @@ plot( projects.pca$x[,1:2], bg=ss$school_state, pch=21)
 
 projects.princomp <- princomp(projects.matrix, cor=T)
 summary(projects.princomp, loadings=T)
-
 ```
 
 ## Try some text mining
@@ -489,7 +488,32 @@ p2 <- essays_word_freq %>%
 
 grid.arrange(p1, p2, nrow=1)
 
-# Students stands out for both "completed" and "expired" projects,
+# Rank words based off of percentage of occurance in completed and
+# essays
+essays_word_rank <- essays_word_freq %>%
+  mutate(pct_rank_completed = percent_rank(completed_freq),
+         pct_rank_expired = percent_rank(expired_freq))
+
+# Find words that rank high for "completed" essays but are at
+# least 75% points lower in "expired" essays and vice versa
+words_unmatched <- essays_word_rank %>%
+  filter(abs(pct_rank_completed-pct_rank_expired) > 0.75)
+
+# Get the sentiments associated with these words
+words_unmatched_sent <- words_unmatched %>%
+    left_join(nrc, by = c("essay_words" = "word")) %>%
+    group_by(sentiment) %>%
+    mutate(completed_freq = sum(completed_freq),
+           expired_freq= sum(expired_freq)) %>%
+    ungroup()
+
+# Print out the sentiments for the words that appear often in
+# essays for "completed" projects, but not in essays for 
+# "expired" projects
+print(success_unmatched)
+
+# Now look 
+# "Students" stands out for both "completed" and "expired" projects,
 # So create word clouds without it, to see the rest better
 essays_word_freq <- essays_word_freq %>%
   filter(essay_words != "students")
