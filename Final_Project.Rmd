@@ -10,16 +10,22 @@ output:
 ---
 <a id="top"></a>
 
-```{r echo = FALSE}
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+if (!require(tidytext))
+  install.packages("tidytext")
+if (!require(wordcloud))
+  install.packages("wordcloud")
+if(!require(caret))
+  install.packages("caret")
 library(knitr)
 opts_chunk$set(cache = TRUE, message = FALSE)
 ```
 
 # A Study of the Data Provided by the Donors Choose Organization 
 by
-Steve Henle
-Hazel John
-Jim Schlough
+Steve Henle<br>
+Hazel John<br>
+Jim Schlough<br>
 
 ## Overview and Motivation
 Funding the contemporary K-12 classroom is greatly challenging and many teachers believe that resources provided are insufficient in meeting the most basic objectives. Nontraditional support is playing an increasingly important part in supporting the modern classroom. 
@@ -673,7 +679,6 @@ Looking at the wordcloud, one of the things that stood out were the higher relat
 
 #### Essay Length Analysis:  Comparing the word count for completed vs expired projects
 ```{r win loss word breakdowns, echo=FALSE, message=FALSE, warning=FALSE}
-if (!require("xtable"))   {install.packages("xtable")}
 
 # getting some mutually exclusive sets of winning vs losing words
 # total word counts of essays by project
