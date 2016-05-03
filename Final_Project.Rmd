@@ -20,7 +20,7 @@ Steve Henle
 Hazel John
 Jim Schlough
 
-## Overview and Motivation: 
+## Overview and Motivation
 Funding the contemporary K-12 classroom is greatly challenging and many teachers believe that resources provided are insufficient in meeting the most basic objectives. Nontraditional support is playing an increasingly important part in supporting the modern classroom. 
 
 The Donors Choose web platform provides a mechanism of providing support to teachers by benefactors. A potential donor may read an appeal written by a teacher to fulfill a specific classroom material need, and donates towards their funding goal. If the funding goal is met, these materials are sourced by fulfillment sources under the control of the Donors Choose organization, and sent directly to the school. 
@@ -33,7 +33,7 @@ We wish to apply statistical analysis of the available data in an effort to go b
 
 <a href="#top">back to top</a><br>
 
-## Related Work: 
+## Related Work
 Jim's sister is a grade school art teacher who successfully funded a 3D printer for her classroom. On last report, the best expert for this printer is a female 4th grader.
 
 Steve writes grant proposals, so it is interesting to understand what makes a good grant proposal by way of a data analysis.
@@ -44,22 +44,22 @@ Stephen Colbert made the news in 2015 [by funding every teacher's proposal for t
  
 <a href="#top">back to top</a><br>
 
-## Initial Questions: 
-*What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?*
-*What makes the difference between a proposal that is funded and one that expires? 
-*Which are the winning qualities? 
-*Of the predicting qualities, are there any that are under the control of the writer?
-*Does the content of the written essay matter?
+## Initial Questions
+We set forth to answer the following questions regarding the funding proposals for Donors Choose.
+
+*What makes the difference between a proposal that is funded and one that expires?<br> 
+*Which are the winning qualities? <br>
+*Of the predicting qualities, are there any that are under the control of the writer?<br>
+*Does the content of the written essay matter?<br>
 
 <a href="#top">back to top</a><br>
 
-## Data: 
+## Data
 We are using the data made publicly available on the Donors Choose website. This publicly available comes in the form of downloadable csv files, ranging in size from megabytes to gigabytes.
 This data can be found at [here](http://data.donorschoose.org/open-data/overview/).
 
-This is a suggested schema for the recomposition of their open dataset:
-![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
-
+The proposals are one element in the open data set published from the Donors Choose web site. An image of the schema showing the suggested recomposition is in <a href="#csv_recomposition">Appendix B</a>, below, and can also be found at Donors Choose.
+<br>
 <a href="#top">back to top</a><br>
 
 
@@ -91,138 +91,8 @@ Our first task was to download the data, clean it up and extract the data we nee
 
 #### rm_old: Our First Data Wrangling Utility 
 
-Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. In this way we were able to separate the 2014 projects records from the csv file and get the rest of the team started with the data. This is the source code for the intermediate c++ application, named rm_old as it removed the records older than 2014 and also 2015 or newer.
-
-<a href="#top">back to top</a><br>
-
-#### c++ Source code for rm_old
-```{r original cpp app, eval=FALSE}
-
-//
-//  main.cpp
-//  rm_old
-//
-//  Created by Jim Schlough on 4/22/16.
-//  Copyright © 2016 Jim Schlough. All rights reserved.
-//
-
-#include <iostream>
-#include <fstream>    // for ifstream, ofstream
-
-#include <string>
-#include <ctime>
-#include <cstdlib>
-#include <stdio.h>    // for tmpnam, remove
-
-// for time & date processing:
-#include <sstream>
-#include <locale>
-#include <iomanip>
-
-using namespace std;
-
-int main(int argc, const char * argv[]) {
-
-    // insert code here...
-    if (argc< 3 )
-    {
-        std::cout << "Usage rm_old fileInName bottomCutOffDate topCutOffDate dateFieldIndex" << endl;
-        std::cout << endl;
-        std::cout << "   dateFieldIndex is ONE based" << endl;
-    }
-    
-    char filebuf [L_tmpnam];
-    ::strcpy(filebuf, argv[1]);
-    
-    std::string outFileName;
-
-    int dateFieldIdx = 0;
-    dateFieldIdx = std::atoi(argv[4])-2;
-    
-    
-    // TODO: check for clean cutOffDateInput here
-    int64_t bottomCutOffDateValue = 0L, topCutOffDateValue = 0L;
-    bottomCutOffDateValue = std::atol(argv[2]);
-    topCutOffDateValue = std::atol(argv[3]);
-    
-    // TODO: check for valid (positive integer) date field index (1 based) here
-    
-
-    std::ifstream inputFile (filebuf, std::ios::in);
-    outFileName.append(filebuf);
-    outFileName.erase( outFileName.find(".csv"),4);
-    outFileName.append("_output.csv");
-    
-    std::ofstream outputFile (outFileName, std::ios::out);
-    std::string line, submittedDateTimeStr, submittedDateStr;
-    bool skipFirst = true;
-    
-    if (inputFile.is_open())
-    {
-        std::getline(inputFile, line);
-        skipFirst = (line.find('\"') == std::string::npos); // first line is  header
-        
-        
-        while( inputFile)
-        {
-            if (skipFirst)
-            {
-                skipFirst = false;
-                outputFile << line << endl;
-            }
-            else std::getline(inputFile, line);
-            
-            if (line.length() < 2) continue;
-            size_t numberCommas = std::count(line.begin(), line.end(), ',');
-            if (numberCommas < 43 ||
-                line.find("\"") == std::string::npos ) // skip the header line, which has no "
-                continue;
-            
-            // find the position of the date in the 41st field
-            int x = 0;
-            //std::string::size_type
-            int lastPos=0, startOfDatePos = 0, endOfDatePos = 0;
-            int64_t dateIntValue = 0L;
-            
-            // TODO: make magical 39 to be dateFieldIndex in future refinement
-            
-            while (x<43   &&  inputFile.good() ) {
-                lastPos = (int)line.find(',', lastPos+1);
-                if (x== (dateFieldIdx)) // date we seek is in the 41st field
-                {
-                    startOfDatePos = lastPos+2;
-                } else if (startOfDatePos != 0)
-                {
-                    endOfDatePos = (int)line.find(',', startOfDatePos)-1; // ", is end of field, so -1 for " part
-                    break;
-                }
-                x++;
-            }
-            
-            submittedDateTimeStr = line.substr(startOfDatePos, endOfDatePos-startOfDatePos );  ///19);
-            
-            // truncate the hours, minutes and seconds off of the date
-            submittedDateStr = submittedDateTimeStr.substr(0, submittedDateTimeStr.length()-9 );
-            while(submittedDateStr.find('-') != std::string::npos )
-                submittedDateStr = submittedDateStr.erase( submittedDateStr.find('-'), 1);
-            dateIntValue = std::atol(submittedDateStr.c_str());//, std::locale("en_US.utf-8"));
-            
-            if (dateIntValue <= bottomCutOffDateValue || dateIntValue >= topCutOffDateValue)
-                continue; // skip to the next record if this one is too early or too late
-            
-            if (outputFile.is_open())
-                outputFile << line << endl;
-            else
-                exit(EXIT_FAILURE);
-        }
-        inputFile.close();
-        outputFile.close();
-    }
-    return 0;
-}
-
-
-```
+Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. This C++ data cleaner provided a temporary means to separate the 2014 projects records from the csv file and get the rest of the team started with the data. The source code for the intermediate c++ application, was named rm_old and its source code can be found <a href="#rm_old">here in Appendix A</a>.
+<br>
 <a href="#top">back to top</a><br>
 
 ### Data Wrangling in R
@@ -238,7 +108,6 @@ Our final data wrangling consisted of the following steps:
 
 
 ```{r eval=FALSE, echo=FALSE}
-
 # Create function to write data frame to zipped rds file
 # The dataframe is split into smaller files depending on size
 writeToDisk <- function(df, path) {
@@ -415,7 +284,7 @@ essays <- uploadData("essays")
 
 <a href="#top">back to top</a><br>
 
-## Exploratory Analysis: 
+## Exploratory Analysis
 We began an exploration of the data to see what relationships might be discovered within it, to compare the completed and expired projects.
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
@@ -597,7 +466,7 @@ projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + 
 
 ```
 
-#### Building a preditction model for proposal success
+#### Building a Prediction Model for Proposal Success
 
 The first attempt to build a model was to use the glm method in the train function and select several variables from the earlier exploratory analysis that looked to have an effect. These variables included: amount of money asked for, school state, primary focus, primary subject, resource type, date posted. We used glm because our outcome is either funded or not funded and glm works well for logistic regression.
 
@@ -650,7 +519,9 @@ So using all the data, except the contents of the essay, provided by the request
 <a href="#top">back to top</a><br>
 
 #### Text Analysis  
+
 ##### Word Selection Analysis
+
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 
 # Tokenize the essay and remove stop words and include only
@@ -845,9 +716,150 @@ The length of essay, in terms of word count, does not seem to matter much all by
 
 <a href="#top">back to top</a><br>
 
-## Final Analysis: 
-*What did you learn about the data? How did you answer the questions? How can you justify your answers? *
+## Final Analysis
+After examining the data, we were able to draw some conclusions.
+Of all of the predictors, the total project cost was found to the be most significant.
 
+##Appendices
 
+###Appendix A: rm_old Source Code
+The original source code of the stop gap c++ data cleaning application is below.
+<br><a id="rm_old"></a> <br>
+####c++ Source code for rm_old
+```{r original cpp app, eval=FALSE, echo=TRUE}
+//
+//  main.cpp
+//  rm_old
+//
+//  Created by Jim Schlough on 4/22/16.
+//  Copyright © 2016 Jim Schlough. All rights reserved.
+//
 
+#include <iostream>
+#include <fstream>    // for ifstream, ofstream
 
+#include <string>
+#include <ctime>
+#include <cstdlib>
+#include <stdio.h>    // for tmpnam, remove
+
+// for time & date processing:
+#include <sstream>
+#include <locale>
+#include <iomanip>
+
+using namespace std;
+
+int main(int argc, const char * argv[]) {
+
+    // insert code here...
+    if (argc< 3 )
+    {
+        std::cout << "Usage rm_old fileInName bottomCutOffDate topCutOffDate dateFieldIndex" << endl;
+        std::cout << endl;
+        std::cout << "   dateFieldIndex is ONE based" << endl;
+    }
+    
+    char filebuf [L_tmpnam];
+    ::strcpy(filebuf, argv[1]);
+    
+    std::string outFileName;
+
+    int dateFieldIdx = 0;
+    dateFieldIdx = std::atoi(argv[4])-2;
+    
+    
+    // TODO: check for clean cutOffDateInput here
+    int64_t bottomCutOffDateValue = 0L, topCutOffDateValue = 0L;
+    bottomCutOffDateValue = std::atol(argv[2]);
+    topCutOffDateValue = std::atol(argv[3]);
+    
+    // TODO: check for valid (positive integer) date field index (1 based) here
+    
+
+    std::ifstream inputFile (filebuf, std::ios::in);
+    outFileName.append(filebuf);
+    outFileName.erase( outFileName.find(".csv"),4);
+    outFileName.append("_output.csv");
+    
+    std::ofstream outputFile (outFileName, std::ios::out);
+    std::string line, submittedDateTimeStr, submittedDateStr;
+    bool skipFirst = true;
+    
+    if (inputFile.is_open())
+    {
+        std::getline(inputFile, line);
+        skipFirst = (line.find('\"') == std::string::npos); // first line is  header
+        
+        
+        while( inputFile)
+        {
+            if (skipFirst)
+            {
+                skipFirst = false;
+                outputFile << line << endl;
+            }
+            else std::getline(inputFile, line);
+            
+            if (line.length() < 2) continue;
+            size_t numberCommas = std::count(line.begin(), line.end(), ',');
+            if (numberCommas < 43 ||
+                line.find("\"") == std::string::npos ) // skip the header line, which has no "
+                continue;
+            
+            // find the position of the date in the 41st field
+            int x = 0;
+            //std::string::size_type
+            int lastPos=0, startOfDatePos = 0, endOfDatePos = 0;
+            int64_t dateIntValue = 0L;
+            
+            // TODO: make magical 39 to be dateFieldIndex in future refinement
+            
+            while (x<43   &&  inputFile.good() ) {
+                lastPos = (int)line.find(',', lastPos+1);
+                if (x== (dateFieldIdx)) // date we seek is in the 41st field
+                {
+                    startOfDatePos = lastPos+2;
+                } else if (startOfDatePos != 0)
+                {
+                    endOfDatePos = (int)line.find(',', startOfDatePos)-1; // ", is end of field, so -1 for " part
+                    break;
+                }
+                x++;
+            }
+            
+            submittedDateTimeStr = line.substr(startOfDatePos, endOfDatePos-startOfDatePos );  ///19);
+            
+            // truncate the hours, minutes and seconds off of the date
+            submittedDateStr = submittedDateTimeStr.substr(0, submittedDateTimeStr.length()-9 );
+            while(submittedDateStr.find('-') != std::string::npos )
+                submittedDateStr = submittedDateStr.erase( submittedDateStr.find('-'), 1);
+            dateIntValue = std::atol(submittedDateStr.c_str());//, std::locale("en_US.utf-8"));
+            
+            if (dateIntValue <= bottomCutOffDateValue || dateIntValue >= topCutOffDateValue)
+                continue; // skip to the next record if this one is too early or too late
+            
+            if (outputFile.is_open())
+                outputFile << line << endl;
+            else
+                exit(EXIT_FAILURE);
+        }
+        inputFile.close();
+        outputFile.close();
+    }
+    return 0;
+}
+
+```
+<br>
+<a href="#top">back to top</a><br>
+
+<a id="csv_recomposition"></a>
+<br>
+
+###Appendix B: The Suggested csv Recomposition Schema
+This is schema diagram appears in the Donors Choose web site to serve as a diagram for the recomposition of the csv files:
+![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
+<a href="#top">back to top</a><br>
+<a id="dataloader_in_r"></a>
+<br>
