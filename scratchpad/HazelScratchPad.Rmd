@@ -218,8 +218,8 @@ uploadData <- function(kind) {
 
 # Read in the different data sets
 projects <- uploadData("projects")
-resources <- uploadData("resources")
-donations <- uploadData("donations")
+#resources <- uploadData("resources")
+#donations <- uploadData("donations")
 essays <- uploadData("essays")
 
 # dplyr wants us the put column names in back-quotes when the name
@@ -510,7 +510,7 @@ words_unmatched_sent <- words_unmatched %>%
 # Print out the sentiments for the words that appear often in
 # essays for "completed" projects, but not in essays for 
 # "expired" projects
-print(success_unmatched)
+print(words_unmatched_sent)
 
 # Now look 
 # "Students" stands out for both "completed" and "expired" projects,

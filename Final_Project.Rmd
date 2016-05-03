@@ -11,14 +11,25 @@ output:
 <a id="top"></a>
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
+require(knitr)
+opts_chunk$set(cache = TRUE, message = FALSE)
+
+# Load required libraries
 if (!require(tidytext))
   install.packages("tidytext")
 if (!require(wordcloud))
   install.packages("wordcloud")
 if(!require(caret))
   install.packages("caret")
-library(knitr)
-opts_chunk$set(cache = TRUE, message = FALSE)
+library(ggplot2)
+library(gridExtra)
+library(readr)
+library(lubridate)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(reshape2)
+theme_set(theme_bw(base_size = 16))
 ```
 
 # A Study of the Data Provided by the Donors Choose Organization 
@@ -72,23 +83,6 @@ The proposals are one element in the open data set published from the Donors Cho
 
 ### Data Wrangling
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-# Load required libraries
-library(ggplot2)
-library(gridExtra)
-library(readr)
-library(lubridate)
-library(tidytext)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(reshape2)
-library(wordcloud)
-library(caret)
-theme_set(theme_bw(base_size = 16))
-```
-
-<a href="#top">back to top</a><br>
 
 #### Step 1: Data Download & Cleanup
 
@@ -655,21 +649,21 @@ essays_word_freq <- essays_word_freq %>%
 
 We then used wordclouds to compare the words that occur the most in both funding categories. We started with high frequency words in essays for projects that were fully funded.
 
-```{r message=FALSE, warning=FALSE, echo=FALSE, rfig.cap="Wordcloud for \"completed\" project essays"}
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Fig 1: Wordcloud for \"completed\" project essays", fig.align='center'}
 
 # Create word cloud for funded essays
 wordcloud(essays_word_freq$essay_words, essays_word_freq$completed_freq,
-          min.freq = 20000, max.words=75, random.order=TRUE,
-          rot.per=0.35, colors=brewer.pal(8, "Dark2"))
+          scale=c(3,.02), min.freq=15000, max.words=150,
+          random.order=FALSE, rot.per=0.15, colors=brewer.pal(8, "Dark2"))
 ```
 
 Then we compared it with the high frequency words in essays for projects that expired and weren't fully funded.
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE, rfig.cap="Wordcloud for \"expired\" project essays"}
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Fig 2: Wordcloud for \"expired\" project essays", fig.align='center' }
 # Create word cloud for expired essays
 wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
-          min.freq = 20000, max.words=75, random.order=TRUE,
-          rot.per=0.35, colors=brewer.pal(8, "Dark2"))
+          scale=c(3,.02), min.freq=15000, max.words=150, 
+          random.order=FALSE, rot.per=0.15, colors=brewer.pal(8, "Dark2"))
 
 ```
 
