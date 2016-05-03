@@ -13,12 +13,6 @@ output:
 ```{r echo = FALSE}
 library(knitr)
 opts_chunk$set(cache = TRUE, message = FALSE)
-knit_hooks$set(plot = function(x, options) {
-  paste('<figure><img src="',
-        opts_knit$get('base.url'), paste(x, collapse = '.'),
-        '"><figcaption>', options$fig.cap, '</figcaption></figure>',
-        sep = '')
-})
 ```
 
 # A Study of the Data Provided by the Donors Choose Organization 
@@ -537,7 +531,7 @@ As part of the data available from the DonorsChoose website, we were able to dow
 
 **Sentiment Analysis**
 
- We started by tokenizing the essay words and then using the sentiment lexicon from "nrc" to assign sentiments to the words. We then computed the percentage occurance for the sentiments in essays grouped by the funding status of the projects and compared.
+We started by tokenizing the essay words and then using the sentiment lexicon from "nrc" to assign sentiments to the words. We then computed the percentage occurance for the sentiments in essays grouped by the funding status of the projects and compared the difference betweed "completed" and "expired" projects.
  
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 
