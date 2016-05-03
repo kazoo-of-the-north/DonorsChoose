@@ -8,6 +8,22 @@ output:
     toc_depth: 5
     fig_caption: true
 ---
+<script language="javascript"> 
+    function toggle(num) {
+      var ele = document.getElementById("toggleText" + num);
+      var text = document.getElementById("displayText" + num);
+      if(ele.style.display == "block") {
+        ele.style.display = "none";
+        text.innerHTML = "show";
+      }
+      else {
+        ele.style.display = "block";
+        text.innerHTML = "hide";
+      }
+   } 
+  </script>
+  
+
 <a id="top"></a>
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
@@ -76,10 +92,18 @@ We set forth to answer the following questions regarding the funding proposals f
 We are using the data made publicly available on the Donors Choose website. This publicly available comes in the form of downloadable csv files, ranging in size from megabytes to gigabytes.
 This data can be found at [here](http://data.donorschoose.org/open-data/overview/).
 
-The proposals are one element in the open data set published from the Donors Choose web site. An image of the schema showing the suggested recomposition is in <a href="#csv_recomposition">Appendix B</a>, below, and can also be found at Donors Choose.
+The proposals are one element in the open data set published from the Donors Choose web site. An image of the schema showing the suggested recomposition can be found by clicking the link below, and can also be found at Donors Choose.
 <br>
 <a href="#top">back to top</a><br>
-
+<a id="displayText" href="javascript:toggle(4);">Show or hide source code for rm_old data cleaner</a>
+  <div id="toggleText4" style="display: none">
+  This is schema diagram appears in the Donors Choose web site to serve as a diagram for the recomposition of the csv files:
+![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
+<a href="#top">back to top</a><br>
+<a id="dataloader_in_r"></a>
+<br>
+  
+  </div>
 
 ### Data Wrangling
 
@@ -92,8 +116,142 @@ Our first task was to download the data, clean it up and extract the data we nee
 
 #### rm_old: Our First Data Wrangling Utility 
 
-Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. This C++ data cleaner provided a temporary means to separate the 2014 projects records from the csv file and get the rest of the team started with the data. The source code for the intermediate c++ application, was named rm_old and its source code can be found <a href="#rm_old">here in Appendix A</a>.
+Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. This C++ data cleaner provided a temporary means to separate the 2014 projects records from the csv file and get the rest of the team started with the data. The source code for the intermediate c++ application, was named rm_old. Toggle the link below to see the source.
 <br>
+<a href="#top">back to top</a><br>
+<a id="displayText" href="javascript:toggle(1);">Show or hide source code for rm_old data cleaner</a>
+  <div id="toggleText1" style="display: none">
+  
+The original source code of the stop gap c++ data cleaning application is below.
+<br><a id="rm_old"></a> <br>
+####c++ Source code for rm_old
+```{r original cpp app, eval=FALSE, echo=TRUE}
+//
+//  main.cpp
+//  rm_old
+//
+//  Created by Jim Schlough on 4/22/16.
+//  Copyright © 2016 Jim Schlough. All rights reserved.
+//
+
+#include <iostream>
+#include <fstream>    // for ifstream, ofstream
+
+#include <string>
+#include <ctime>
+#include <cstdlib>
+#include <stdio.h>    // for tmpnam, remove
+
+// for time & date processing:
+#include <sstream>
+#include <locale>
+#include <iomanip>
+
+using namespace std;
+
+int main(int argc, const char * argv[]) {
+
+    // insert code here...
+    if (argc< 3 )
+    {
+        std::cout << "Usage rm_old fileInName bottomCutOffDate topCutOffDate dateFieldIndex" << endl;
+        std::cout << endl;
+        std::cout << "   dateFieldIndex is ONE based" << endl;
+    }
+    
+    char filebuf [L_tmpnam];
+    ::strcpy(filebuf, argv[1]);
+    
+    std::string outFileName;
+
+    int dateFieldIdx = 0;
+    dateFieldIdx = std::atoi(argv[4])-2;
+    
+    
+    // TODO: check for clean cutOffDateInput here
+    int64_t bottomCutOffDateValue = 0L, topCutOffDateValue = 0L;
+    bottomCutOffDateValue = std::atol(argv[2]);
+    topCutOffDateValue = std::atol(argv[3]);
+    
+    // TODO: check for valid (positive integer) date field index (1 based) here
+    
+
+    std::ifstream inputFile (filebuf, std::ios::in);
+    outFileName.append(filebuf);
+    outFileName.erase( outFileName.find(".csv"),4);
+    outFileName.append("_output.csv");
+    
+    std::ofstream outputFile (outFileName, std::ios::out);
+    std::string line, submittedDateTimeStr, submittedDateStr;
+    bool skipFirst = true;
+    
+    if (inputFile.is_open())
+    {
+        std::getline(inputFile, line);
+        skipFirst = (line.find('\"') == std::string::npos); // first line is  header
+        
+        
+        while( inputFile)
+        {
+            if (skipFirst)
+            {
+                skipFirst = false;
+                outputFile << line << endl;
+            }
+            else std::getline(inputFile, line);
+            
+            if (line.length() < 2) continue;
+            size_t numberCommas = std::count(line.begin(), line.end(), ',');
+            if (numberCommas < 43 ||
+                line.find("\"") == std::string::npos ) // skip the header line, which has no "
+                continue;
+            
+            // find the position of the date in the 41st field
+            int x = 0;
+            //std::string::size_type
+            int lastPos=0, startOfDatePos = 0, endOfDatePos = 0;
+            int64_t dateIntValue = 0L;
+            
+            // TODO: make magical 39 to be dateFieldIndex in future refinement
+            
+            while (x<43   &&  inputFile.good() ) {
+                lastPos = (int)line.find(',', lastPos+1);
+                if (x== (dateFieldIdx)) // date we seek is in the 41st field
+                {
+                    startOfDatePos = lastPos+2;
+                } else if (startOfDatePos != 0)
+                {
+                    endOfDatePos = (int)line.find(',', startOfDatePos)-1; // ", is end of field, so -1 for " part
+                    break;
+                }
+                x++;
+            }
+            
+            submittedDateTimeStr = line.substr(startOfDatePos, endOfDatePos-startOfDatePos );  ///19);
+            
+            // truncate the hours, minutes and seconds off of the date
+            submittedDateStr = submittedDateTimeStr.substr(0, submittedDateTimeStr.length()-9 );
+            while(submittedDateStr.find('-') != std::string::npos )
+                submittedDateStr = submittedDateStr.erase( submittedDateStr.find('-'), 1);
+            dateIntValue = std::atol(submittedDateStr.c_str());//, std::locale("en_US.utf-8"));
+            
+            if (dateIntValue <= bottomCutOffDateValue || dateIntValue >= topCutOffDateValue)
+                continue; // skip to the next record if this one is too early or too late
+            
+            if (outputFile.is_open())
+                outputFile << line << endl;
+            else
+                exit(EXIT_FAILURE);
+        }
+        inputFile.close();
+        outputFile.close();
+    }
+    return 0;
+}
+
+```
+
+</div>
 <a href="#top">back to top</a><br>
 
 ### Data Wrangling in R
@@ -108,8 +266,10 @@ Our final data wrangling consisted of the following steps:
 * Filtering out projects not posted in 2014
 * Storing cleaned dataframes as RDS files
 
-
-```{r eval=FALSE, echo=FALSE}
+<a id="displayText" href="javascript:toggle(2);">Show or hide source code succeeding R data cleaner</a>
+  <div id="toggleText2" style="display: none">
+  
+```{r eval=FALSE }
 # Create function to write data frame to zipped rds file
 # The dataframe is split into smaller files depending on size
 writeToDisk <- function(df, path) {
@@ -254,14 +414,18 @@ rm(projects, resources, donations, essays,
 # Cleanup memory
 gc()
 ```
+</div>
 
 <a href="#top">back to top</a><br>
 
 #### Step 2: Data Upload from disk
 
-A simple function was written to upload the cleaned data from RDS files stored on disk.  All data exploration and analysis was run on the uploaded data.
+A simple function was written to upload the cleaned data from RDS files stored on disk. Once the data has been put to disk locally, this function is all that's needed to load the data objects. All data exploration and analysis was run on the uploaded data.
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
+<a id="displayText" href="javascript:toggle(3);">Show or hide source code for data load from disk</a>
+  <div id="toggleText3" style="display: none">
+  
+```{r message=FALSE, warning=FALSE}
 
 # Create function to load data from the rds files containing the
 # name "kind".
@@ -283,13 +447,14 @@ donations <- uploadData("donations")
 essays <- uploadData("essays")
 
 ```
-
+</div>
 <a href="#top">back to top</a><br>
 
 ## Exploratory Analysis
 We began an exploration of the data to see what relationships might be discovered within it, to compare the completed and expired projects.
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
+
+```{r message=FALSE, warning=FALSE }
 
 #add column to project df called percent_funded that tells the percent money given over asked for
 projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
@@ -302,35 +467,40 @@ print("Data is nowhere near normal, looks like logistic analysis of funded vs no
 print("Will not look at different factors contained in the projects file to determine if they affect the likliehood of getting funded. There are techinically three outcomes for each request. Complete, means reached or succeeded funding goal. Expired, time ran out wihtout reaching goal. Reallocated, Did not reach goal, but donors chose to give previously pledge amount to a different proposal.")
 
 #poverty level graph
-projects %>% group_by(poverty_level, funding_status) %>% 
+poverty_level_graph<-projects %>% group_by(poverty_level, funding_status) %>% 
   summarise(total= n()) %>% 
   group_by(poverty_level) %>% 
   mutate(totals = sum(total), percent = total/totals) %>% 
   ungroup %>% 
   ggplot(aes(poverty_level, percent)) + geom_point(aes(color = funding_status)) + theme(
     axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+poverty_level_graph
 
 #latitude and longitude level graph by amount of goal
-projects %>% ggplot(aes(x = school_latitude, y = percent_funded)) + geom_point() + ylab("Final Status")
-projects %>% ggplot(aes(x = school_longitude, y = percent_funded)) + geom_point() + ylab("Final Status")
+latitude_graph<-projects %>% ggplot(aes(x = school_latitude, y = percent_funded)) + geom_point() + ylab("Final Status")
+longitude_graph<-projects %>% ggplot(aes(x = school_longitude, y = percent_funded)) + geom_point() + ylab("Final Status")
+latitude_graph
+longitude_graph
 
 #state graph
-projects %>% group_by(school_state, funding_status) %>% 
+state_graph<-projects %>% group_by(school_state, funding_status) %>% 
   summarise(total= n()) %>% 
   group_by(school_state) %>% 
   mutate(totals = sum(total), percent = total/totals) %>% 
   ungroup %>% 
   ggplot(aes(school_state, percent)) + geom_point(aes(color = funding_status)) + theme(
     axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+state_graph
 
 #school urban vs rual
-projects %>% group_by(school_metro, funding_status) %>% 
+urban_vs_rural <-projects %>% group_by(school_metro, funding_status) %>% 
   summarise(total= n()) %>% 
   group_by(school_metro) %>% 
   mutate(totals = sum(total), percent = total/totals) %>% 
   ungroup %>% 
   ggplot(aes(school_metro, percent)) + geom_point(aes(color = funding_status)) + theme(
     axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
+urban_vs_rural
 
 #teacher prefix, sort of a stand in for teacher gender
 projects %>% group_by(teacher_prefix, funding_status) %>% 
@@ -467,6 +637,7 @@ projects %>% group_by(eligible_almost_home_match, funding_status) %>%
 projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + ylab("Final Status")
 
 ```
+ 
 
 #### Building a Prediction Model for Proposal Success
 
@@ -532,8 +703,9 @@ As part of the data available from the DonorsChoose website, we were able to dow
 **Sentiment Analysis**
 
 We started by tokenizing the essay words and then using the sentiment lexicon from "nrc" to assign sentiments to the words. We then computed the percentage occurance for the sentiments in essays grouped by the funding status of the projects and compared the difference betweed "completed" and "expired" projects.
- 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
+<a id="displayText" href="javascript:toggle(6);">Show or hide source code for sentiment analysis</a>
+  <div id="toggleText6" style="display: none"> 
+```{r message=FALSE, warning=FALSE}
 
 # Tokenize the essay and remove stop words and include only
 # all alphabetic words. All words are lower case, so there is
@@ -567,6 +739,10 @@ essays_sentiment_freq <-
   mutate(occurance_pct = sentiment_freq*100/sum(sentiment_freq)) %>%
   ungroup()
 
+```
+</div>
+
+```{r}
 
 # Plot the sentiment frequency and seperate by funding status
 essays_sentiment_freq %>%
@@ -596,7 +772,9 @@ rm(temp)
 **Word Analysis**
 
 We then analyzed the occurance of specific words in the essays for insights. We started by looking at the top 10 words for both fully funded and expired projects.
- 
+
+<a id="displayText" href="javascript:toggle(7);">Show or hide source code for Word Analysis</a>
+  <div id="toggleText7" style="display: none">
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Compute word frequency in essays regardless of sentiment
 # or funding_status
@@ -630,7 +808,10 @@ p2 <- essays_word_freq %>%
         plot.title = element_text(size = 10)) +
   xlab("essay_words") +
   coord_flip()
+```
+</div>
 
+```{r}
 grid.arrange(p1, p2, nrow=1)
 ```
 
@@ -672,7 +853,11 @@ Looking at the wordcloud, one of the things that stood out were the higher relat
 <a href="#top">back to top</a><br>
 
 #### Essay Length Analysis:  Comparing the word count for completed vs expired projects
-```{r win loss word breakdowns, echo=FALSE, message=FALSE, warning=FALSE}
+We took a look to see, does the length that an essay has in terms of word count matter?
+
+<a id="displayText" href="javascript:toggle(9);">Show or hide source code for data load from disk</a>
+  <div id="toggleText9" style="display: none">
+```{r win loss word breakdowns,  message=FALSE, warning=FALSE}
 
 # getting some mutually exclusive sets of winning vs losing words
 # total word counts of essays by project
@@ -735,7 +920,10 @@ word_count_summaries<-rbind(word_count_summaries, expired_project_count_2014)
 word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_count)
 word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_mean)
 word_count_summaries<-rbind(word_count_summaries, expd_total_word_sums_sd )
- 
+```
+</div>
+
+```{r}
 kable(word_count_summaries, digits = 0, caption = "Essay Word Counts")
 
 ```
@@ -750,11 +938,6 @@ Here we look at the number of words in essays, to see if there is any significan
 ```{r Essay word count comparison results, message=FALSE, warning=FALSE, echo=FALSE}
 # Does essay word count matter?
 
-# sprintf("For the year 2014, from a total of %d essays: ", count(completed_projects)$n, count(expired_projects)$n)
-# sprintf("%d essays were from completed projects and %d essays were from expired projects. ", count(projects)$n, count(completed_projects)$n, count(expired_projects)$n)
-# sprintf("All essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(essay_total_word_sums$word_count), sd(essay_total_word_sums$word_count))
-# sprintf("Completed essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(completed_total_word_sums$word_count), sd(completed_total_word_sums$word_count))
-# sprintf("Expired essays had a mean length of %3.4f and a standard deviation of %3.4f", mean(expd_total_word_sums$word_count), sd(expd_total_word_sums$word_count))
 sprintf("On average, completed essays had essay word counts that were %3.4f %s than expired ones", abs(mean(completed_total_word_sums$word_count) - mean(expd_total_word_sums$word_count)), ifelse(mean(completed_total_word_sums$word_count) > mean(expd_total_word_sums$word_count), "longer", "shorter" ))
 
 ```
@@ -764,148 +947,6 @@ The length of essay, in terms of word count, does not seem to matter much all by
 
 ## Final Analysis
 After examining the data, we were able to draw some conclusions.
-Of all of the predictors, the total project cost was found to the be most significant.
+Of all of the predictors, the total project cost was found to the be most significant. 
 
-##Appendices
 
-###Appendix A: rm_old Source Code
-The original source code of the stop gap c++ data cleaning application is below.
-<br><a id="rm_old"></a> <br>
-####c++ Source code for rm_old
-```{r original cpp app, eval=FALSE, echo=TRUE}
-//
-//  main.cpp
-//  rm_old
-//
-//  Created by Jim Schlough on 4/22/16.
-//  Copyright © 2016 Jim Schlough. All rights reserved.
-//
-
-#include <iostream>
-#include <fstream>    // for ifstream, ofstream
-
-#include <string>
-#include <ctime>
-#include <cstdlib>
-#include <stdio.h>    // for tmpnam, remove
-
-// for time & date processing:
-#include <sstream>
-#include <locale>
-#include <iomanip>
-
-using namespace std;
-
-int main(int argc, const char * argv[]) {
-
-    // insert code here...
-    if (argc< 3 )
-    {
-        std::cout << "Usage rm_old fileInName bottomCutOffDate topCutOffDate dateFieldIndex" << endl;
-        std::cout << endl;
-        std::cout << "   dateFieldIndex is ONE based" << endl;
-    }
-    
-    char filebuf [L_tmpnam];
-    ::strcpy(filebuf, argv[1]);
-    
-    std::string outFileName;
-
-    int dateFieldIdx = 0;
-    dateFieldIdx = std::atoi(argv[4])-2;
-    
-    
-    // TODO: check for clean cutOffDateInput here
-    int64_t bottomCutOffDateValue = 0L, topCutOffDateValue = 0L;
-    bottomCutOffDateValue = std::atol(argv[2]);
-    topCutOffDateValue = std::atol(argv[3]);
-    
-    // TODO: check for valid (positive integer) date field index (1 based) here
-    
-
-    std::ifstream inputFile (filebuf, std::ios::in);
-    outFileName.append(filebuf);
-    outFileName.erase( outFileName.find(".csv"),4);
-    outFileName.append("_output.csv");
-    
-    std::ofstream outputFile (outFileName, std::ios::out);
-    std::string line, submittedDateTimeStr, submittedDateStr;
-    bool skipFirst = true;
-    
-    if (inputFile.is_open())
-    {
-        std::getline(inputFile, line);
-        skipFirst = (line.find('\"') == std::string::npos); // first line is  header
-        
-        
-        while( inputFile)
-        {
-            if (skipFirst)
-            {
-                skipFirst = false;
-                outputFile << line << endl;
-            }
-            else std::getline(inputFile, line);
-            
-            if (line.length() < 2) continue;
-            size_t numberCommas = std::count(line.begin(), line.end(), ',');
-            if (numberCommas < 43 ||
-                line.find("\"") == std::string::npos ) // skip the header line, which has no "
-                continue;
-            
-            // find the position of the date in the 41st field
-            int x = 0;
-            //std::string::size_type
-            int lastPos=0, startOfDatePos = 0, endOfDatePos = 0;
-            int64_t dateIntValue = 0L;
-            
-            // TODO: make magical 39 to be dateFieldIndex in future refinement
-            
-            while (x<43   &&  inputFile.good() ) {
-                lastPos = (int)line.find(',', lastPos+1);
-                if (x== (dateFieldIdx)) // date we seek is in the 41st field
-                {
-                    startOfDatePos = lastPos+2;
-                } else if (startOfDatePos != 0)
-                {
-                    endOfDatePos = (int)line.find(',', startOfDatePos)-1; // ", is end of field, so -1 for " part
-                    break;
-                }
-                x++;
-            }
-            
-            submittedDateTimeStr = line.substr(startOfDatePos, endOfDatePos-startOfDatePos );  ///19);
-            
-            // truncate the hours, minutes and seconds off of the date
-            submittedDateStr = submittedDateTimeStr.substr(0, submittedDateTimeStr.length()-9 );
-            while(submittedDateStr.find('-') != std::string::npos )
-                submittedDateStr = submittedDateStr.erase( submittedDateStr.find('-'), 1);
-            dateIntValue = std::atol(submittedDateStr.c_str());//, std::locale("en_US.utf-8"));
-            
-            if (dateIntValue <= bottomCutOffDateValue || dateIntValue >= topCutOffDateValue)
-                continue; // skip to the next record if this one is too early or too late
-            
-            if (outputFile.is_open())
-                outputFile << line << endl;
-            else
-                exit(EXIT_FAILURE);
-        }
-        inputFile.close();
-        outputFile.close();
-    }
-    return 0;
-}
-
-```
-<br>
-<a href="#top">back to top</a><br>
-
-<a id="csv_recomposition"></a>
-<br>
-
-###Appendix B: The Suggested csv Recomposition Schema
-This is schema diagram appears in the Donors Choose web site to serve as a diagram for the recomposition of the csv files:
-![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
-<a href="#top">back to top</a><br>
-<a id="dataloader_in_r"></a>
-<br>
