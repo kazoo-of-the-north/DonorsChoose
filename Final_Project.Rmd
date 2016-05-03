@@ -45,11 +45,12 @@ Stephen Colbert made the news in 2015 [by funding every teacher's proposal for t
 <a href="#top">back to top</a><br>
 
 ## Initial Questions: 
-*What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?*
-*What makes the difference between a proposal that is funded and one that expires? 
-*Which are the winning qualities? 
-*Of the predicting qualities, are there any that are under the control of the writer?
-*Does the content of the written essay matter?
+We set forth to answer the following questions regarding the funding proposals for Donors Choose.
+
+*What makes the difference between a proposal that is funded and one that expires?<br> 
+*Which are the winning qualities? <br>
+*Of the predicting qualities, are there any that are under the control of the writer?<br>
+*Does the content of the written essay matter?<br>
 
 <a href="#top">back to top</a><br>
 
@@ -57,9 +58,8 @@ Stephen Colbert made the news in 2015 [by funding every teacher's proposal for t
 We are using the data made publicly available on the Donors Choose website. This publicly available comes in the form of downloadable csv files, ranging in size from megabytes to gigabytes.
 This data can be found at [here](http://data.donorschoose.org/open-data/overview/).
 
-This is a suggested schema for the recomposition of their open dataset:
-![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
-
+The proposals are one element in the open data set published from the Donors Choose web site. An image of the schema showing the suggested recomposition is in <a href="#csv_recomposition">Appendix B</a>, below, and can also be found at Donors Choose.
+<br>
 <a href="#top">back to top</a><br>
 
 
@@ -91,148 +91,20 @@ Our first task was to download the data, clean it up and extract the data we nee
 
 #### rm_old: Our First Data Wrangling Utility 
 
-Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. In this way we were able to separate the 2014 projects records from the csv file and get the rest of the team started with the data. This is the source code for the intermediate c++ application, named rm_old as it removed the records older than 2014 and also 2015 or newer.
+Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. This C++ data cleaner provided a temporary means to separate the 2014 projects records from the csv file and get the rest of the team started with the data. The source code for the intermediate c++ application, was named rm_old and its source code can be found <a href="#rm_old">here in Appendix A</a>.
+<br>
 
 <a href="#top">back to top</a><br>
 
-#### c++ Source code for rm_old
-```{r original cpp app, eval=FALSE}
-
-//
-//  main.cpp
-//  rm_old
-//
-//  Created by Jim Schlough on 4/22/16.
-//  Copyright © 2016 Jim Schlough. All rights reserved.
-//
-
-#include <iostream>
-#include <fstream>    // for ifstream, ofstream
-
-#include <string>
-#include <ctime>
-#include <cstdlib>
-#include <stdio.h>    // for tmpnam, remove
-
-// for time & date processing:
-#include <sstream>
-#include <locale>
-#include <iomanip>
-
-using namespace std;
-
-int main(int argc, const char * argv[]) {
-
-    // insert code here...
-    if (argc< 3 )
-    {
-        std::cout << "Usage rm_old fileInName bottomCutOffDate topCutOffDate dateFieldIndex" << endl;
-        std::cout << endl;
-        std::cout << "   dateFieldIndex is ONE based" << endl;
-    }
-    
-    char filebuf [L_tmpnam];
-    ::strcpy(filebuf, argv[1]);
-    
-    std::string outFileName;
-
-    int dateFieldIdx = 0;
-    dateFieldIdx = std::atoi(argv[4])-2;
-    
-    
-    // TODO: check for clean cutOffDateInput here
-    int64_t bottomCutOffDateValue = 0L, topCutOffDateValue = 0L;
-    bottomCutOffDateValue = std::atol(argv[2]);
-    topCutOffDateValue = std::atol(argv[3]);
-    
-    // TODO: check for valid (positive integer) date field index (1 based) here
-    
-
-    std::ifstream inputFile (filebuf, std::ios::in);
-    outFileName.append(filebuf);
-    outFileName.erase( outFileName.find(".csv"),4);
-    outFileName.append("_output.csv");
-    
-    std::ofstream outputFile (outFileName, std::ios::out);
-    std::string line, submittedDateTimeStr, submittedDateStr;
-    bool skipFirst = true;
-    
-    if (inputFile.is_open())
-    {
-        std::getline(inputFile, line);
-        skipFirst = (line.find('\"') == std::string::npos); // first line is  header
-        
-        
-        while( inputFile)
-        {
-            if (skipFirst)
-            {
-                skipFirst = false;
-                outputFile << line << endl;
-            }
-            else std::getline(inputFile, line);
-            
-            if (line.length() < 2) continue;
-            size_t numberCommas = std::count(line.begin(), line.end(), ',');
-            if (numberCommas < 43 ||
-                line.find("\"") == std::string::npos ) // skip the header line, which has no "
-                continue;
-            
-            // find the position of the date in the 41st field
-            int x = 0;
-            //std::string::size_type
-            int lastPos=0, startOfDatePos = 0, endOfDatePos = 0;
-            int64_t dateIntValue = 0L;
-            
-            // TODO: make magical 39 to be dateFieldIndex in future refinement
-            
-            while (x<43   &&  inputFile.good() ) {
-                lastPos = (int)line.find(',', lastPos+1);
-                if (x== (dateFieldIdx)) // date we seek is in the 41st field
-                {
-                    startOfDatePos = lastPos+2;
-                } else if (startOfDatePos != 0)
-                {
-                    endOfDatePos = (int)line.find(',', startOfDatePos)-1; // ", is end of field, so -1 for " part
-                    break;
-                }
-                x++;
-            }
-            
-            submittedDateTimeStr = line.substr(startOfDatePos, endOfDatePos-startOfDatePos );  ///19);
-            
-            // truncate the hours, minutes and seconds off of the date
-            submittedDateStr = submittedDateTimeStr.substr(0, submittedDateTimeStr.length()-9 );
-            while(submittedDateStr.find('-') != std::string::npos )
-                submittedDateStr = submittedDateStr.erase( submittedDateStr.find('-'), 1);
-            dateIntValue = std::atol(submittedDateStr.c_str());//, std::locale("en_US.utf-8"));
-            
-            if (dateIntValue <= bottomCutOffDateValue || dateIntValue >= topCutOffDateValue)
-                continue; // skip to the next record if this one is too early or too late
-            
-            if (outputFile.is_open())
-                outputFile << line << endl;
-            else
-                exit(EXIT_FAILURE);
-        }
-        inputFile.close();
-        outputFile.close();
-    }
-    return 0;
-}
-
-
-```
-<a href="#top">back to top</a><br>
-
-### Data Loader redone in R
-The c++ application made with the source code above was disadvantageous in that it would only run on Macintosh computers, used by 2 out of 3 group members. So this solution was set aside, in favor of the solution presented below, so everyone could run the same dataloader.
+### Data Loader Redone in R
+The c++ application made with the source code above was disadvantageous in that it would only run on Macintosh computers, used by 2 out of 3 group members. So this solution was set aside, in favor of the solution written in R, with source found in <a href="#dataloader_in_r">Appendix C</a>, so everyone could run the same dataloader.
 
 We also saved the final data sets to submit as part of the project.
 
 This is only run once and not evaluated after that since we can read data from the filtered data files directly.
 
-```{r, eval=FALSE}
+```{r, eval=FALSE, echo=FALSE, warning=FALSE}
+# TODO: eval needs to be set to true prior to handing in
 
 # Create function to write data frame to zipped rds file
 # The dataframe is split into smaller files depending on size
@@ -385,7 +257,7 @@ gc()
 
 This is where we would start after the initial data retrieval. We need to load the data from the RDS files in the data folder
 
-```{r, warning=FALSE}
+```{r }
 
 # Create function to load data from the rds files containing the
 # name "kind".
@@ -592,11 +464,11 @@ projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + 
 
 ```
 
-#### Building a preditction model for proposal success
+#### Building a Prediction Model for Proposal Success
 
 The first attempt to build a model was to use the glm method in the train function and select several variables from the earlier exploratory analysis that looked to have an effect. These variables included: amount of money asked for, school state, primary focus, primary subject, resource type, date posted. We used glm because our outcome is either funded or not funded and glm works well for logistic regression.
 
-```{r}
+```{r, warning=FALSE }
 #create column for binary 1 = funded, 0 = not funded regression
 projects <- projects %>% mutate(funded = ifelse(funding_status == "completed", 1 , 0))
 
@@ -608,7 +480,7 @@ fit_selected_components
 
 The RMSE from this method is not great, but it is a start so we tried to improve on it. First we filtered out some of the uncommon variables, that appeared to have an effect in the exploratory analysis. For example if the teacher was in teacher in teach for America, a New York teach fellow, was it a charter school, or other school types. All total these only filtered out few percent of the applications, and are factors the requesters can't change so they are not useful in building a prediction model. We then ran the training again.
 
-```{r}
+```{r, warning=FALSE }
 
 #fliter out less used variables
 projects2 <- projects %>% filter(school_year_round == 'f'& school_magnet == 'f'& school_charter == 'f'& school_nlns == 'f'& school_kipp == 'f'& school_charter_ready_promise == 'f'& teacher_teach_for_america == 'f'& teacher_ny_teaching_fellow == 'f')
@@ -622,7 +494,7 @@ fit_selected_components_filtered
 
 Removing these proposals did show an effect in an improvement of RMSE, even though it is . The next approach was that perhaps our model was trying to fit to many parameters, so we pared it down to only include the factors that the exploratory analysis showed to have the greatest effect. These factors were: cost, date of posting, and resource type.
 
-```{r}
+```{r, warning=FALSE }
 #run train again using most selective variables
 fit_more_selective_components <- train(funded ~ total_price_excluding_optional_support +  date_posted + resource_type,  data=projects2, method="glm", family="binomial")
 
@@ -633,7 +505,7 @@ fit_more_selective_components
 This shows an even greater improvement in RMSE. In looking back at the data it was clear that the cost requested has the strongest effect. So we decided to run train again to see if that variable alone might improve our accurary (as shown by RMSE).
 
 
-```{r}
+```{r warning=FALSE}
 fit_cost_only <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", family="binomial")
 
 fit_cost_only
@@ -841,8 +713,300 @@ The length of essay, in terms of word count, does not seem to matter much all by
 <a href="#top">back to top</a><br>
 
 ## Final Analysis: 
-*What did you learn about the data? How did you answer the questions? How can you justify your answers? *
+After examining the data, we were able to draw some conclusions.
+Of all of the predictors, the total project cost was found to the be most significant.
+
+##Appendices
+
+###Appendix A: rm_old Source Code
+The original source code of the stop gap c++ data cleaning application is below.
+<br><a id="rm_old"></a> <br>
+####c++ Source code for rm_old
+```{r original cpp app, eval=FALSE, echo=TRUE}
+//
+//  main.cpp
+//  rm_old
+//
+//  Created by Jim Schlough on 4/22/16.
+//  Copyright © 2016 Jim Schlough. All rights reserved.
+//
+
+#include <iostream>
+#include <fstream>    // for ifstream, ofstream
+
+#include <string>
+#include <ctime>
+#include <cstdlib>
+#include <stdio.h>    // for tmpnam, remove
+
+// for time & date processing:
+#include <sstream>
+#include <locale>
+#include <iomanip>
+
+using namespace std;
+
+int main(int argc, const char * argv[]) {
+
+    // insert code here...
+    if (argc< 3 )
+    {
+        std::cout << "Usage rm_old fileInName bottomCutOffDate topCutOffDate dateFieldIndex" << endl;
+        std::cout << endl;
+        std::cout << "   dateFieldIndex is ONE based" << endl;
+    }
+    
+    char filebuf [L_tmpnam];
+    ::strcpy(filebuf, argv[1]);
+    
+    std::string outFileName;
+
+    int dateFieldIdx = 0;
+    dateFieldIdx = std::atoi(argv[4])-2;
+    
+    
+    // TODO: check for clean cutOffDateInput here
+    int64_t bottomCutOffDateValue = 0L, topCutOffDateValue = 0L;
+    bottomCutOffDateValue = std::atol(argv[2]);
+    topCutOffDateValue = std::atol(argv[3]);
+    
+    // TODO: check for valid (positive integer) date field index (1 based) here
+    
+
+    std::ifstream inputFile (filebuf, std::ios::in);
+    outFileName.append(filebuf);
+    outFileName.erase( outFileName.find(".csv"),4);
+    outFileName.append("_output.csv");
+    
+    std::ofstream outputFile (outFileName, std::ios::out);
+    std::string line, submittedDateTimeStr, submittedDateStr;
+    bool skipFirst = true;
+    
+    if (inputFile.is_open())
+    {
+        std::getline(inputFile, line);
+        skipFirst = (line.find('\"') == std::string::npos); // first line is  header
+        
+        
+        while( inputFile)
+        {
+            if (skipFirst)
+            {
+                skipFirst = false;
+                outputFile << line << endl;
+            }
+            else std::getline(inputFile, line);
+            
+            if (line.length() < 2) continue;
+            size_t numberCommas = std::count(line.begin(), line.end(), ',');
+            if (numberCommas < 43 ||
+                line.find("\"") == std::string::npos ) // skip the header line, which has no "
+                continue;
+            
+            // find the position of the date in the 41st field
+            int x = 0;
+            //std::string::size_type
+            int lastPos=0, startOfDatePos = 0, endOfDatePos = 0;
+            int64_t dateIntValue = 0L;
+            
+            // TODO: make magical 39 to be dateFieldIndex in future refinement
+            
+            while (x<43   &&  inputFile.good() ) {
+                lastPos = (int)line.find(',', lastPos+1);
+                if (x== (dateFieldIdx)) // date we seek is in the 41st field
+                {
+                    startOfDatePos = lastPos+2;
+                } else if (startOfDatePos != 0)
+                {
+                    endOfDatePos = (int)line.find(',', startOfDatePos)-1; // ", is end of field, so -1 for " part
+                    break;
+                }
+                x++;
+            }
+            
+            submittedDateTimeStr = line.substr(startOfDatePos, endOfDatePos-startOfDatePos );  ///19);
+            
+            // truncate the hours, minutes and seconds off of the date
+            submittedDateStr = submittedDateTimeStr.substr(0, submittedDateTimeStr.length()-9 );
+            while(submittedDateStr.find('-') != std::string::npos )
+                submittedDateStr = submittedDateStr.erase( submittedDateStr.find('-'), 1);
+            dateIntValue = std::atol(submittedDateStr.c_str());//, std::locale("en_US.utf-8"));
+            
+            if (dateIntValue <= bottomCutOffDateValue || dateIntValue >= topCutOffDateValue)
+                continue; // skip to the next record if this one is too early or too late
+            
+            if (outputFile.is_open())
+                outputFile << line << endl;
+            else
+                exit(EXIT_FAILURE);
+        }
+        inputFile.close();
+        outputFile.close();
+    }
+    return 0;
+}
+
+```
+<br>
+<a href="#top">back to top</a><br>
+
+<a id="csv_recomposition"></a>
+<br>
+
+###Appendix B: The Suggested csv Recomposition Schema
+This is schema diagram appears in the Donors Choose web site to serve as a diagram for the recomposition of the csv files:
+![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
+<a href="#top">back to top</a><br>
+<a id="dataloader_in_r"></a>
+<br>
+
+###Appendix C: The Data Loader Rewritten in R
+This is the last data loader we ended up using.
+```{r, eval=FALSE}
+# This is for display purposes only
 
 
+# Create function to write data frame to zipped rds file
+# The dataframe is split into smaller files depending on size
+writeToDisk <- function(df, path) {
+  # get the size of the data frame
+  filesz = object.size(df)
+  
+  # Figure out if it needs to be split, we try to 
+  # split into sizes ~ 250MB (before compression)
+  numsplits = filesz %/% (150*1024*1024)
+  
+  # Split into subsets and write to disk in RDS format
+  # so that we can preserve attritubes including type
+  if (numsplits > 1) {
+    # Split the dataframe into "numsplits" subsets
+    df_split <- split(df, ntile(df$`_projectid`, numsplits))
+    
+    cat("Writing", numsplits, "files with prefix", path, "\n")
+    
+    # Save data to separate rds files
+    # Wrap loop inside invisible() since we are not interested in
+    # the return values
+    invisible(lapply(names(df_split), function(x) {
+      
+      write_rds(df_split[[x]], paste0(path, x, "of", numsplits, ".rds.gz"),
+                compress = "gz")
+    }))
+  }
+  else {
+    
+    cat("Writing 1 file with prefix", path, "\n")
+    write_rds(df, paste0(path, ".rds.gz"), compress = "gz")
+  }
+}
 
+# Create function that download file of type "kind", removes special 
+# characters and loads the data
+retrieveData <- function(kind, needs_cleanup) {
+  
+  # Create the download link
+  url <- paste0("https://s3.amazonaws.com/open_data/csv/opendata_",
+                  kind, ".zip")
+     
+  # Create the path to download the file to           
+  zipname <- paste0("data/opendata_", kind, ".zip")
+  
+  # Create the filename
+  filename <- paste0("opendata_", kind, ".csv")
+  
+  cat("Downloading from", url, "...")
+  
+  # Download the file
+  download.file(url, zipname)
+  
+  # Donations, resources and essays data files needed cleanup with
+  # special characters, escaped characters etc. creating read errors.
+  # Data cleanup was done using sed as a system call after
+  # realizing that using pipe() to run sed from R was slow.
+  # NOTE: The sed script was created on MacOS and might not be portable.
+  # Tried to run sed inside pipe - scan(pipe(sed_cmd), sep = ",") 
+  # but had too many issues with needing to use multiple escaped characters
+  # Also tried readlines() followed by gsub() but the performance was poor.
+  if (needs_cleanup) {
+    # cleanup is needed so unzip, run sed and then read in data
+    
+    # unzip the file
+    unzip(zipname, filename)
+    
+    # Create a sed command to clean out special characters
+    sed_cmd <- paste0("sed -i '' -f ", kind,
+                      "_clnup.sed ", filename)
+    
+    cat("Running data cleanup for", filename, "...")
+    
+    # Run the sed command
+    system(sed_cmd)
+    
+    cat("Loading", kind, "...")
+    
+    # Read in the data
+    assign(kind, read_csv(filename), envir=globalenv())
+    
+    # Remove files
+    unlink(zipname)
+    unlink(filename)
+  }
+  else {
+    cat("Loading", kind, "...")
+    
+    # cleanup is not needed, so read in data directly
+    assign(kind, read_csv(unz(zipname, filename)), envir=globalenv())
 
+    # Remove zip file
+    unlink(zipname)
+  }
+}
+
+# Create the list the type of data files we want to download
+types_list = c("projects", "resources", "donations", "essays")
+  
+# Note which files need cleanup
+needs_cleanup = c(FALSE, TRUE, TRUE, TRUE)
+
+# Download files, remove special characters and load data
+for (index in seq(1:4)) {
+  retrieveData(types_list[index], needs_cleanup[index])
+}
+
+# Convert dates to "Date" format
+projects <- projects %>%
+  mutate(date_posted = as_date(date_posted),
+         date_completed = as_date(date_completed),
+         date_thank_you_packet_mailed =
+           as_date(date_thank_you_packet_mailed),
+         date_expiration = as_date(date_expiration))
+
+donations <- donations %>%
+  mutate(donation_timestamp = as_date(donation_timestamp))
+
+# Filter out projects that were posted in 2014
+projects <- projects %>% filter(year(date_posted) == 2014)
+
+# Select resources, donations and essays associated with
+# 
+resources <- resources %>%
+  semi_join(projects, by = "_projectid")
+donations <- donations %>%
+  semi_join(projects, by = "_projectid")
+essays <- essays %>%
+  semi_join(projects, by = "_projectid")
+
+# Save filtered data to disk
+writeToDisk(df=projects, path="data/opendata_2014_projects")
+writeToDisk(df=resources, path="data/opendata_2014_resources")
+writeToDisk(df=donations, path="data/opendata_2014_donations")
+writeToDisk(df=essays, path="data/opendata_2014_essays")
+
+# Let us clean all the variables so as to be able to start 
+# with a clean slate
+rm(projects, resources, donations, essays, 
+   types_list, needs_cleanup, retrieveData, writeToDisk)
+
+# Cleanup memory
+gc()
+```
