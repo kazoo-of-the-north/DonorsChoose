@@ -59,6 +59,16 @@ library(reshape2)
 
 theme_set(theme_bw(base_size = 16))
 ```
+<a id="displayText" href="javascript:toggle(99);">Show or hide to see compile time setup</a>
+  <div id="toggleText99" style="display: none">  
+```{r compile time stopwatch start, echo=FALSE}
+# looking at compile times: 
+startTime<-timestamp()
+startTime
+
+```
+</div>
+
 
 ## Overview and Motivation
 Funding the contemporary K-12 classroom is greatly challenging and many teachers believe that resources provided are insufficient in meeting the most basic objectives. Nontraditional support is playing an increasingly important part in supporting the modern classroom. 
@@ -423,7 +433,7 @@ A simple function was written to upload the cleaned data from RDS files stored o
 <a id="displayText" href="javascript:toggle(4);">Code: Data Upload from Disk</a>
   <div id="toggleText4" style="display: none">
   
-```{r message=FALSE, warning=FALSE}
+```{r Data Upload from disk, message=FALSE, warning=FALSE}
 
 # Create function to load data from the rds files containing the
 # name "kind".
@@ -454,17 +464,17 @@ We began an exploration of the data to see what relationships might be discovere
 <a id="displayText" href="javascript:toggle(5);">Code: Data Preparation</a>
   <div id="toggleText5" style="display: none">
   
-```{r warning=FALSE}
+```{r Exploratory Analysis, warning=FALSE}
 #add column to project df called percent_funded that tells the percent money given over asked for
 projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
 ```
 </div>
 
-A critical first step was to determine how to analyze success. There were two possible metrics we came up with: a binary funded or not funded outcome, or a granualar (money donated / money asked for). The granualar option would give us more options in trying to model the data, whereas the first option would require using logistic regression. To determine if the granular option was feasable we first had to look out the distribution of (money donated / money asked for) accross the proposals.
+A critical first step was to determine how to analyze success. There were two possible metrics we came up with: a binary funded or not funded outcome, or a granualar (money donated / money requested). The granualar option would give us more options in trying to model the data, whereas the first option would require using logistic regression. To determine if the granular option was feasable we first had to look out the distribution of (money donated / money requested) accross the proposals.
 
-Here is a histogram and qqplot showing the distribution of (money donated / money asked for):
+Here is a histogram and qqplot showing the distribution of donation to requested donation success ratio (money donated / money requested):
 
-```{r echo=FALSE}
+```{r donation to requested donation success ratio, echo=FALSE}
 #test for normalacy of percent funded
 projects %>% ggplot(aes(percent_funded *100)) + geom_histogram() + xlab("Percent Donations/Funding Requested") + ylab("Number of proposals")
 
@@ -484,7 +494,7 @@ We started by taking a quick look at percenge funding of projects across all sta
 <a id="displayText" href="javascript:toggle(6);">Code: Distribution Across US </a>
   <div id="toggleText6" style="display: none">
 
-```{r warning=FALSE}
+```{r Demographics US Map, warning=FALSE}
 
 #load us map data
 all_states <- map_data("state")
@@ -503,15 +513,17 @@ map <- map + geom_point(data=projects,
 </div>
 
 ```{r}
-map
+map 
 ```
+
+Perhaps the map shown above, with apologies to Alaska and Hawaii, is most useful in showing the popularity and ubiquity of the Donors Choose platform. This seed has certainly taken root in a broad cross section of the national professional teaching community. If the existing funding mechanisms of taxation and distribution through elected representatives were sufficient to the need, would this platform be as widely adopted?<br>
 
 We then explored the available demographic factors further.
 
 <a id="displayText" href="javascript:toggle(7);">Code: Analysis of Demographics </a>
   <div id="toggleText7" style="display: none">
   
-```{r}
+```{r poverty level graph, warning=FALSE}
 #poverty level graph
 poverty <- projects %>% group_by(poverty_level, funding_status) %>% 
   summarise(total= n()) %>% 
@@ -574,7 +586,7 @@ We next looked at different parameters about the requesting teacher.
 <a id="displayText" href="javascript:toggle(8);">Code: Analysis of Teacher Qualification </a>
   <div id="toggleText8" style="display: none">
   
-```{r warning=FALSE}
+```{r Teacher Attributes,warning=FALSE}
 
 #teacher prefix, sort of a stand in for teacher gender
 prefix <- projects %>% group_by(teacher_prefix, funding_status) %>% 
@@ -613,8 +625,7 @@ ny <- projects %>% group_by(teacher_ny_teaching_fellow, funding_status) %>%
 grid.arrange(prefix, america, ny, ncol = 3)
 ```
 
-
-Here we can see several factors that appear to make a difference. However, The number of Drs., teach for america fellows, and NY teaching fellows is extremely small (<1% combined), and ultimately are unlikely to prove useful in predicting success for most applicants.
+Here we can see several factors that appear to make a difference. However, The number of Drs., teach for america fellows, and NY teaching fellows is extremely small (<1% combined), and ultimately are unlikely to prove useful in predicting success for most applicants. Perhaps these teacher attributes might be more predictive of the likelihood of producing any Donors Choose submission at all, which is also predictive of success. You have to be in to win.
 
 ####School Attributes
 We next looked at difference in the schools themselves. Thes factors include: were they a charter school, magnet school, New Leaders New Schools affiliate(NLNS), Knowledge is Power public charter (KIPP) school, Chart School Promise ready, and did they have school year round.
@@ -622,7 +633,7 @@ We next looked at difference in the schools themselves. Thes factors include: we
 <a id="displayText" href="javascript:toggle(9);">Code: Analysis of School Attributes </a>
   <div id="toggleText9" style="display: none">
   
-```{r warning=FALSE}
+```{r School Attributes, warning=FALSE}
 #charter school
 charter <- projects %>% group_by(school_charter, funding_status) %>% 
   summarise(total= n()) %>% 
@@ -701,7 +712,7 @@ We continued to look at different factors of the classroom. These include: the c
 <a id="displayText" href="javascript:toggle(10);">Code: Analysis of Classroom Attributes </a>
   <div id="toggleText10" style="display: none">
   
-```{r warning=FALSE}
+```{r Classroom Attributes, warning=FALSE}
 #primary focus subject
 subject <- projects %>% group_by(primary_focus_subject, funding_status) %>% 
   summarise(total= n()) %>% 
@@ -758,7 +769,7 @@ From here we can see that focus area and grade level seem to have little affect.
 <a id="displayText" href="javascript:toggle(11);">Code: Analysis of Financial Attributes </a>
   <div id="toggleText11" style="display: none">
   
-```{r warning=FALSE}
+```{r Financial Attributes, warning=FALSE}
 
 #resource type
 resource <- projects %>% group_by(resource_type, funding_status) %>% summarise(total= n()) %>% 
@@ -814,14 +825,15 @@ grid.arrange(resource, double, almost, date, price, layout_matrix = lay2)
 
 ```
 
-Here things get a little more interesting. It seems technology supplies are less likely, and books more likely to be funded. If you have matching fundings coming in you are more likely to be funding, although the almost home match is a little self fulfilling since it is given to people you are already near their goal. Date posted seems to show a seasonal effect, with the best odds right before school starts and the worst shortly after it starts. The we see total cost, and keep in mind the Y-axis we see this has the largest effect we have seen so far, with a precipitous dropoff in the beginning before leveling off. As you can see the error increases as cost increases so we thought this might be due to few proposals requesting this much. So we looked at the histogram to see the distribution of total costs of requests.
+Here things get a little more interesting. It seems technology supplies are less likely, and books more likely to be funded. If you have matching funds coming in, you are more likely to be funded, although the almost home match is a little self fulfilling since it is given to people quite close to their goal. <br>
+Date posted seems to show a seasonal effect, with the best odds right before school starts and the worst shortly after it starts. Then we see total cost, and keep in mind the Y-axis we see this has the largest effect we have seen so far, with a precipitous dropoff in the beginning before leveling off. As you can see, the error increases as cost increases, so we thought this might be due to few proposals requesting this much. So we then looked at the histogram to see the distribution of total costs of requests.
 
-```{r warning=FALSE}
+```{r histogram showing cost of all proposals,warning=FALSE}
 #histogram showing cost of all proposals
 projects %>% ggplot(aes(total_price_excluding_optional_support)) + geom_histogram() + ylab("# Proposals") + xlab("Total Cost")
 ```
 
-From this it appears that the fast majority of proposals request less than $1000 so we looked at the distribution and success rates below $1000.
+From this it appears that the vast majority of proposals are requests under $1000, so we looked at the distribution and success rates below $1000.
 
 <a id="displayText" href="javascript:toggle(12);">Code: Distribution of lower cose projects </a>
   <div id="toggleText12" style="display: none">
@@ -964,13 +976,13 @@ essays_sentiments <- essays_sentiments %>%
   left_join(projects, by = "_projectid") %>%
   select(`_projectid`, funding_status, essay_words, sentiment)
 
-# Count the sentiment occurance percentage
+# Count the sentiment occurrence percentage
 essays_sentiment_freq <-
   essays_sentiments %>%
   group_by(funding_status, sentiment) %>%
   summarise(sentiment_freq = n()) %>%
   group_by(funding_status) %>%
-  mutate(occurance_pct = sentiment_freq*100/sum(sentiment_freq)) %>%
+  mutate(occurrence_pct = sentiment_freq*100/sum(sentiment_freq)) %>%
   ungroup()
 
 ```
@@ -981,14 +993,14 @@ essays_sentiment_freq <-
 # Plot the sentiment frequency and seperate by funding status
 essays_sentiment_freq %>%
   filter(funding_status != "reallocated") %>%
-  ggplot(aes(x=sentiment, y = occurance_pct, fill = sentiment)) +
+  ggplot(aes(x=sentiment, y = occurrence_pct, fill = sentiment)) +
   geom_bar(stat="identity") +
   facet_grid(~funding_status) +
   theme(text = element_text(size = 10),
         title = element_text(size = 12),
         legend.key.size = unit(0.5, "cm"),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  ggtitle('Sentiment Occurance% in Funding Essays') +
+  ggtitle('Sentiment Occurrence% in Funding Essays') +
   coord_flip()
 ```
 
@@ -997,15 +1009,15 @@ We can see from the graph that both positive and negitive sentiments occur at an
 ```{r warning=FALSE, echo=FALSE}
 temp <- essays_sentiment_freq %>% 
         filter(funding_status != "reallocated") %>% 
-        select(sentiment, funding_status, occurance_pct) %>%
-        spread(funding_status, occurance_pct)
+        select(sentiment, funding_status, occurrence_pct) %>%
+        spread(funding_status, occurrence_pct)
 print(temp)
 rm(temp)
 ```
 
 **Word Analysis**
 
-We then analyzed the occurance of specific words in the essays for insights. We started by looking at the top 10 words for both fully funded and expired projects.
+We then analyzed the occurrence of specific words in the essays for insights. We started by looking at the top 10 words for both fully funded and expired projects.
 
 <a id="displayText" href="javascript:toggle(18);">Code: Word Analysis</a>
   <div id="toggleText18" style="display: none">
@@ -1093,7 +1105,7 @@ Further analysis was done to see if we could identify words that occur at a high
 ```{r message=FALSE, warning=FALSE}
 # Find words that rank high for "completed" essays but are at
 # least 75% points lower in "expired" essays and vice versa
-# The words are ranked based off of percentage of occurance 
+# The words are ranked based off of percentage of occurrence 
 # in completed and essays. Add sentiments for those words
 words_unmatched <- essays_word_freq %>%
   mutate(pct_rank_completed = percent_rank(completed_freq),
@@ -1224,7 +1236,101 @@ The length of essay, in terms of word count, does not seem to matter much all by
 <a href="#top">back to top</a><br>
 
 ## Final Analysis
-After examining the data, we were able to draw some conclusions.
-Of all of the predictors, the total project cost was found to the be most significant. 
+After examining the data, we were able to draw some conclusions. We take one last look here at our different predictors. But it also might be useful to loosen the notion of *predictor* from being a factor that is strictly causative, to one that could be either causitive or correlational. 
 
+###The Titular Effect
+The title of a teacher might provide an indicator of advanced education. A positive correlation was found where a teacher had both an advanced degree and a greater likelihood of fundedness.
+
+###Aspects of Essays
+We looked at sentiments evoked by the word choise of essays in projects that were both completed and expired, and also the length of the number of words within the essays. No great differences were found within the word choice and essay lengths.<br>
+
+####Essary Word Selection Sentiments
+Greater similarity than dissimilarity was found among word selection within the essarys. Words expressing excitement were found with with greater frequency among the essarys within funded projects.<br>
+
+####Essary Word Counts
+On average, essays were about 301 words long for both essays that were funded or not, so this did not really show any predictive effect. Perhaps the best use of this information is in the context of explaining the difficulty in preparing this part of the project by the teacher.<br>
+
+###The Seasonal Effect
+The time of the school year for 2014 seemed to have some effect, with the best correlation found with projects submitted during back to school shopping. This is in line with the time of year parents expect to spend on school supplies, within the traditions of American culture.<br>
+
+###Factors Uncontrollable by Teachers
+These involve factors regarding school and classroom properties and attributes. These would include year round schools, and other special school classifications.<br>
+
+###Project Cost
+Of all of the predictors, the total project cost was found to the be most significant. It is not really suprising that the most wins in endurance races are the ones having the shortest finish lines.<br>
+
+###Conculusion
+We wish to salute all teachers who accept the challenges of providing education to a world in extreme need. We hope that this may be of some services to those who seek to education, so that they can have the resources they need in pursuit of this noble goal.
+
+<br>
+###Recommendations for Donors Choose Projects
+*All projects that are unsubmitted fail. The presence of a submission is perhaps the most important factor, and is unexamined here.
+*Keep request size in terms of dollars as small as possible.
+*Submit projects within the month prior to the beginning of the school year. This might be most important for school administrators, who should consider that many teachers need to work Summer jobs.
+
+
+
+###Topics for Further Investigation
+We would have liked to get the lines around Alaska and Hawaii.
+
+There are thirteen years of data available on the donors choose website, and we only examined the year of 2014. We are in a much better to have broader look at the data over time, with the code we have above.
+ 
+## References and Attributions
+
+1. The javascript code used here to hide and show code blocks was found at:
+(http://stackoverflow.com/questions/34784121/interactively-show-hide-code-r-markdown-knitr-report)[http://stackoverflow.com/questions/34784121/interactively-show-hide-code-r-markdown-knitr-report]
+
+2. R packages used in this project: <br>
+*Names given are supposed authors, but apologies are offered if any are partially or misattributed. Many of these packages have dependencies on other packages not listed here.* 
+
++ <b>caret</b>  <br>
+[caret](http://topepo.github.io/caret/index.html) Max Kuhn<br>
++ <b>dplyr</b>  <br> 
+[dplyr](https://github.com/hadley/dplyr)
+Hadley Wickham</b>  <br>
++ <b>ggplot2</b>  <br> 
+[ggplot2](https://github.com/hadley/ggplot2)
+Hadley Wickham</b>  <br>
++ <b>gridExtra  </b>  <br>
+[gridExtra](https://cran.r-project.org/web/packages/gridExtra/index.html)
+<br>Baptiste Auguie, Anton Antonov <br>
++ <b>lubridate  </b>  <br>
+[lubridate](https://cran.r-project.org/web/packages/lubridate/index.html)
+<br>Garrett Grolemund [aut], Vitalie Spinu, Hadley Wickham , Jan Lyttle, Imanuel Constigan, Jason Law [ctb], Doug Mitarotonda [ctb], Joseph Larmarange , Jonathan Boiser, Chel Hee Lee [ctb]<br>
++ <b>maps </b>  <br> 
+[maps](https://cran.r-project.org/web/packages/maps/maps.pdf)
+<br>Original S code by Richard A. Becker and Allan R. Wilks.
+R version by Ray Brownrigg.
+Enhancements by Thomas P Minka and Alex Deckmyn.<br>
+We tried to get a choropleth of a 50 state map working, and [this post](https://www.google.com/?ion=1&espv=2#q=R+us+map+50+state) seemed promising. Sorry, Alaska and Hawaii.
+<br>
++ <b>readr</b> <br> 
+[readr](https://cran.r-project.org/web/packages/readr/index.html)
+<br>Hadley Wickham, Romain Francois, R Core Team (Date time code adapted from R), RStudio <br>
++ <b>reshape2 </b>  <br> 
+[reshape2](https://cran.r-project.org/web/packages/reshape2/index.html)
+<br>Hadley Wickham<br>
++ <b>stringr  </b>  <br>
+[stringr](https://cran.r-project.org/web/packages/stringr/index.html)<br>Hadley Wickham <br>
++ <b>tidyr</b>  <br>
+[tidyr](https://cran.r-project.org/web/packages/tidyr/index.html)<br>Hadley Wickham<br>
++ <b>tidytext</b>  <br>
+[tidytext](https://cran.rstudio.com/web/packages/tidytext/)<br>Gabriela De Queiroz [ctb], David Robinson [aut], Julia Silge [aut, cre]
+<br>
++ <b>wordcloud </b>  <br>
+[wordcloud](https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf)
+<br>Ian Fellows<br>
+
+<a id="displayText" href="javascript:toggle(100);">Show or hide to see compile time</a>
+  <div id="toggleText100" style="display: none">
+
+```{r report stop time } 
+stopTime<-timestamp()
+
+# start time
+startTime
+# stop time 
+stopTime
+```
+</div>
 

@@ -383,6 +383,7 @@ X.test <- as.matrix(test_set[,2:22])
 rownames(X.test) <- test_set$pid
 mode(X.test) <- "numeric" 
 
+# Analysis the correlation between the different attributes
 cc = cor(X.train)
 cc[is.na(cc)] <- 0 ##these are for cases with all 0s
 image(cc)
@@ -396,8 +397,10 @@ image(cc)
 # and scaled
 X.pca <- prcomp(X.train, scale=TRUE)
 
+# See a partiable matrix of variable loadings for the first 4 components
+head(unclass(X.pca$rotation)[, 1:4])
 plot(X.pca, type = "l")
-summary(X.pca)$importance[,1:15]
+summary(X.pca)$importance[,1:10]
 
 plot(X.pca$sdev)
 library(ggrepel)
