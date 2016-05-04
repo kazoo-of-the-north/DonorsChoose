@@ -156,6 +156,7 @@ $(document).ready(function () {
 <li><a href="#the-titular-effect">The Titular Effect</a></li>
 <li><a href="#aspects-of-essays">Aspects of Essays</a><ul>
 <li><a href="#essary-word-selection-sentiments">Essary Word Selection Sentiments</a></li>
+<li><a href="#essary-word-counts">Essary Word Counts</a></li>
 </ul></li>
 <li><a href="#the-seasonal-effect">The Seasonal Effect</a></li>
 <li><a href="#factors-uncontrollable-by-teachers">Factors Uncontrollable by Teachers</a></li>
@@ -183,6 +184,8 @@ $(document).ready(function () {
    } 
   </script>
 <p><a id="top"></a></p>
+<pre><code>## ##------ Wed May  4 12:12:46 2016 ------##</code></pre>
+<pre><code>## [1] &quot;##------ Wed May  4 12:12:46 2016 ------##&quot;</code></pre>
 <div id="a-study-of-the-data-provided-by-the-donors-choose-organization" class="section level1">
 <h1>A Study of the Data Provided by the Donors Choose Organization</h1>
 <p>by Steve Henle<br> Hazel John<br> Jim Schlough<br></p>
@@ -894,10 +897,14 @@ word_count_summaries&lt;-rbind(word_count_summaries, expd_total_word_sums_sd )</
 </div>
 <div id="aspects-of-essays" class="section level3">
 <h3>Aspects of Essays</h3>
-<p>We looked at sentiments evoked by essays, and also the length of the number of words within the essays.<br></p>
+<p>We looked at sentiments evoked by the word choise of essays in projects that were both completed and expired, and also the length of the number of words within the essays. No great differences were found within the word choice and essay lengths.<br></p>
 <div id="essary-word-selection-sentiments" class="section level4">
 <h4>Essary Word Selection Sentiments</h4>
-<p>Greater similarity than dissimilarity was found among word selection within the essarys. Words expressing excitement were found with with greater frequency among the essarys within funded projects.<br> ####Essary Word Counts On average, essays were about 301 words long for both essays that were funded or not, so this did not really show any predictive effect. Perhaps the best use of this information is in the context of explaining the difficulty in preparing this part of the project by the teacher.<br></p>
+<p>Greater similarity than dissimilarity was found among word selection within the essarys. Words expressing excitement were found with with greater frequency among the essarys within funded projects.<br></p>
+</div>
+<div id="essary-word-counts" class="section level4">
+<h4>Essary Word Counts</h4>
+<p>On average, essays were about 301 words long for both essays that were funded or not, so this did not really show any predictive effect. Perhaps the best use of this information is in the context of explaining the difficulty in preparing this part of the project by the teacher.<br></p>
 </div>
 </div>
 <div id="the-seasonal-effect" class="section level3">
@@ -906,7 +913,7 @@ word_count_summaries&lt;-rbind(word_count_summaries, expd_total_word_sums_sd )</
 </div>
 <div id="factors-uncontrollable-by-teachers" class="section level3">
 <h3>Factors Uncontrollable by Teachers</h3>
-<p>These involve factors regarding school and classroom properties and attributes.<br></p>
+<p>These involve factors regarding school and classroom properties and attributes. These would include year round schools, and other special school classifications.<br></p>
 </div>
 <div id="project-cost" class="section level3">
 <h3>Project Cost</h3>
@@ -927,8 +934,28 @@ word_count_summaries&lt;-rbind(word_count_summaries, expd_total_word_sums_sd )</
 <h2>References and Attributions</h2>
 <ol style="list-style-type: decimal">
 <li><p>The javascript code used here to hide and show code blocks was found at: (<a href="http://stackoverflow.com/questions/34784121/interactively-show-hide-code-r-markdown-knitr-report" class="uri">http://stackoverflow.com/questions/34784121/interactively-show-hide-code-r-markdown-knitr-report</a>)[<a href="http://stackoverflow.com/questions/34784121/interactively-show-hide-code-r-markdown-knitr-report" class="uri">http://stackoverflow.com/questions/34784121/interactively-show-hide-code-r-markdown-knitr-report</a>]</p></li>
-<li><p>R packages used in this project: <em>Names given are supposed authors, but apologies are offered if any are partially or misattributed. Many of these packages have dependencies on other packages not listed here.</em> +(caret)[<a href="http://topepo.github.io/caret/index.html" class="uri">http://topepo.github.io/caret/index.html</a>] Max Kuhn<br> +(dplyr)[<a href="https://github.com/hadley/dplyr" class="uri">https://github.com/hadley/dplyr</a>] Hadley Wickham<br> +(ggplot2)[<a href="https://github.com/hadley/ggplot2" class="uri">https://github.com/hadley/ggplot2</a>] Hadley Wickham<br> +(gridExtra)[<a href="https://cran.r-project.org/web/packages/gridExtra/index.html" class="uri">https://cran.r-project.org/web/packages/gridExtra/index.html</a>]<br>Baptiste Auguie, Anton Antonov <br> +(lubridate)[<a href="https://cran.r-project.org/web/packages/lubridate/index.html" class="uri">https://cran.r-project.org/web/packages/lubridate/index.html</a>]<br>Garrett Grolemund [aut], Vitalie Spinu, Hadley Wickham , Jan Lyttle, Imanuel Constigan, Jason Law [ctb], Doug Mitarotonda [ctb], Joseph Larmarange , Jonathan Boiser, Chel Hee Lee [ctb]<br> +(maps)[<a href="https://cran.r-project.org/web/packages/maps/maps.pdf" class="uri">https://cran.r-project.org/web/packages/maps/maps.pdf</a>]<br>Original S code by Richard A. Becker and Allan R. Wilks. R version by Ray Brownrigg. Enhancements by Thomas P Minka and Alex Deckmyn.<br> We tried to get a choropleth of a 50 state map working, and (this post)[<a href="https://www.google.com/?ion=1&amp;espv=2#q=R+us+map+50+state" class="uri">https://www.google.com/?ion=1&amp;espv=2#q=R+us+map+50+state</a>] seemed promising. Sorry, Alaska and Hawaii. <br> +(readr)[<a href="https://cran.r-project.org/web/packages/readr/index.html" class="uri">https://cran.r-project.org/web/packages/readr/index.html</a>]<br>Hadley Wickham, Romain Francois, R Core Team (Date time code adapted from R), RStudio <br> +(reshape2)[<a href="https://cran.r-project.org/web/packages/reshape2/index.html" class="uri">https://cran.r-project.org/web/packages/reshape2/index.html</a>]<br>Hadley Wickham<br> +(stringr)[]<br><br> +(tidyr)[]<br><br> +(tidytext)[]<br><br> +(wordcloud)[]<br><br></p></li>
+<li><p>R packages used in this project: <br> <em>Names given are supposed authors, but apologies are offered if any are partially or misattributed. Many of these packages have dependencies on other packages not listed here.</em></p></li>
 </ol>
+<ul>
+<li><b>caret</b> <br> <a href="http://topepo.github.io/caret/index.html">caret</a> Max Kuhn<br></li>
+<li><b>dplyr</b> <br> <a href="https://github.com/hadley/dplyr">dplyr</a> Hadley Wickham</b> <br></li>
+<li><b>ggplot2</b> <br> <a href="https://github.com/hadley/ggplot2">ggplot2</a> Hadley Wickham</b> <br></li>
+<li><b>gridExtra </b> <br> <a href="https://cran.r-project.org/web/packages/gridExtra/index.html">gridExtra</a> <br>Baptiste Auguie, Anton Antonov <br></li>
+<li><b>lubridate </b> <br> <a href="https://cran.r-project.org/web/packages/lubridate/index.html">lubridate</a> <br>Garrett Grolemund [aut], Vitalie Spinu, Hadley Wickham , Jan Lyttle, Imanuel Constigan, Jason Law [ctb], Doug Mitarotonda [ctb], Joseph Larmarange , Jonathan Boiser, Chel Hee Lee [ctb]<br></li>
+<li><b>maps </b> <br> <a href="https://cran.r-project.org/web/packages/maps/maps.pdf">maps</a> <br>Original S code by Richard A. Becker and Allan R. Wilks. R version by Ray Brownrigg. Enhancements by Thomas P Minka and Alex Deckmyn.<br> We tried to get a choropleth of a 50 state map working, and <a href="https://www.google.com/?ion=1&amp;espv=2#q=R+us+map+50+state">this post</a> seemed promising. Sorry, Alaska and Hawaii. <br></li>
+<li><b>readr</b> <br> <a href="https://cran.r-project.org/web/packages/readr/index.html">readr</a> <br>Hadley Wickham, Romain Francois, R Core Team (Date time code adapted from R), RStudio <br></li>
+<li><b>reshape2 </b> <br> <a href="https://cran.r-project.org/web/packages/reshape2/index.html">reshape2</a> <br>Hadley Wickham<br></li>
+<li><b>stringr </b> <br> <a href="https://cran.r-project.org/web/packages/stringr/index.html">stringr</a><br>Hadley Wickham <br></li>
+<li><b>tidyr</b> <br> <a href="https://cran.r-project.org/web/packages/tidyr/index.html">tidyr</a><br>Hadley Wickham<br></li>
+<li><b>tidytext</b> <br> <a href="https://cran.rstudio.com/web/packages/tidytext/">tidytext</a><br>Gabriela De Queiroz [ctb], David Robinson [aut], Julia Silge [aut, cre] <br></li>
+<li><b>wordcloud </b> <br> <a href="https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf">wordcloud</a> <br>Ian Fellows<br></li>
+</ul>
+<a id="displayText" href="javascript:toggle(100);">Show or hide to see compile time</a>
+<div id="toggleText100" style="display: none">
+<pre><code>## ##------ Wed May  4 12:12:46 2016 ------##</code></pre>
+<pre><code>## [1] &quot;##------ Wed May  4 12:12:46 2016 ------##&quot;</code></pre>
+<pre><code>## [1] &quot;##------ Wed May  4 12:12:46 2016 ------##&quot;</code></pre>
+</div>
 </div>
 </div>
 

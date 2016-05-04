@@ -50,7 +50,14 @@ library(reshape2)
 library(maps)
 
 theme_set(theme_bw(base_size = 16))
+
+# looking at compile times: 
+startTime<-timestamp()
+startTime
+
+
 ```
+
 
 # A Study of the Data Provided by the Donors Choose Organization 
 by
@@ -1144,10 +1151,11 @@ After examining the data, we were able to draw some conclusions. We take one las
 The title of a teacher might provide an indicator of advanced education. A positive correlation was found where a teacher had both an advanced degree and a greater likelihood of fundedness.
 
 ###Aspects of Essays
-We looked at sentiments evoked by essays, and also the length of the number of words within the essays.<br>
+We looked at sentiments evoked by the word choise of essays in projects that were both completed and expired, and also the length of the number of words within the essays. No great differences were found within the word choice and essay lengths.<br>
 
 ####Essary Word Selection Sentiments
 Greater similarity than dissimilarity was found among word selection within the essarys. Words expressing excitement were found with with greater frequency among the essarys within funded projects.<br>
+
 ####Essary Word Counts
 On average, essays were about 301 words long for both essays that were funded or not, so this did not really show any predictive effect. Perhaps the best use of this information is in the context of explaining the difficulty in preparing this part of the project by the teacher.<br>
 
@@ -1155,7 +1163,7 @@ On average, essays were about 301 words long for both essays that were funded or
 The time of the school year for 2014 seemed to have some effect, with the best correlation found with projects submitted during back to school shopping. This is in line with the time of year parents expect to spend on school supplies, within the traditions of American culture.<br>
 
 ###Factors Uncontrollable by Teachers
-These involve factors regarding school and classroom properties and attributes.<br>
+These involve factors regarding school and classroom properties and attributes. These would include year round schools, and other special school classifications.<br>
 
 ###Project Cost
 Of all of the predictors, the total project cost was found to the be most significant. It is not really suprising that the most wins in endurance races are the ones having the shortest finish lines.<br>
@@ -1170,34 +1178,68 @@ We wish to salute all teachers who accept the challenges of providing education 
 *Submit projects within the month prior to the beginning of the school year. This might be most important for school administrators, who should consider that many teachers need to work Summer jobs.
 
 
+
 ###Topics for Further Investigation
 We would have liked to get the lines around Alaska and Hawaii.
 
 There are thirteen years of data available on the donors choose website, and we only examined the year of 2014. We are in a much better to have broader look at the data over time, with the code we have above.
  
-
 ## References and Attributions
 
 1. The javascript code used here to hide and show code blocks was found at:
 (http://stackoverflow.com/questions/34784121/interactively-show-hide-code-r-markdown-knitr-report)[http://stackoverflow.com/questions/34784121/interactively-show-hide-code-r-markdown-knitr-report]
 
-2. R packages used in this project:
-*Names given are supposed authors, but apologies are offered if any are partially or misattributed. Many of these packages have dependencies on other packages not listed here.*
-+(caret)[http://topepo.github.io/caret/index.html] Max Kuhn<br>
-+(dplyr)[https://github.com/hadley/dplyr] Hadley Wickham<br>
-+(ggplot2)[https://github.com/hadley/ggplot2] Hadley Wickham<br>
-+(gridExtra)[https://cran.r-project.org/web/packages/gridExtra/index.html]<br>Baptiste Auguie, Anton Antonov <br>
-+(lubridate)[https://cran.r-project.org/web/packages/lubridate/index.html]<br>Garrett Grolemund [aut], Vitalie Spinu, Hadley Wickham , Jan Lyttle, Imanuel Constigan, Jason Law [ctb], Doug Mitarotonda [ctb], Joseph Larmarange , Jonathan Boiser, Chel Hee Lee [ctb]<br>
-+(maps)[https://cran.r-project.org/web/packages/maps/maps.pdf]<br>Original S code by Richard A. Becker and Allan R. Wilks.
+2. R packages used in this project: <br>
+*Names given are supposed authors, but apologies are offered if any are partially or misattributed. Many of these packages have dependencies on other packages not listed here.* 
+
++ <b>caret</b>  <br>
+[caret](http://topepo.github.io/caret/index.html) Max Kuhn<br>
++ <b>dplyr</b>  <br> 
+[dplyr](https://github.com/hadley/dplyr)
+Hadley Wickham</b>  <br>
++ <b>ggplot2</b>  <br> 
+[ggplot2](https://github.com/hadley/ggplot2)
+Hadley Wickham</b>  <br>
++ <b>gridExtra  </b>  <br>
+[gridExtra](https://cran.r-project.org/web/packages/gridExtra/index.html)
+<br>Baptiste Auguie, Anton Antonov <br>
++ <b>lubridate  </b>  <br>
+[lubridate](https://cran.r-project.org/web/packages/lubridate/index.html)
+<br>Garrett Grolemund [aut], Vitalie Spinu, Hadley Wickham , Jan Lyttle, Imanuel Constigan, Jason Law [ctb], Doug Mitarotonda [ctb], Joseph Larmarange , Jonathan Boiser, Chel Hee Lee [ctb]<br>
++ <b>maps </b>  <br> 
+[maps](https://cran.r-project.org/web/packages/maps/maps.pdf)
+<br>Original S code by Richard A. Becker and Allan R. Wilks.
 R version by Ray Brownrigg.
 Enhancements by Thomas P Minka and Alex Deckmyn.<br>
-We tried to get a choropleth of a 50 state map working, and (this post)[https://www.google.com/?ion=1&espv=2#q=R+us+map+50+state] seemed promising. Sorry, Alaska and Hawaii.
+We tried to get a choropleth of a 50 state map working, and [this post](https://www.google.com/?ion=1&espv=2#q=R+us+map+50+state) seemed promising. Sorry, Alaska and Hawaii.
 <br>
-+(readr)[https://cran.r-project.org/web/packages/readr/index.html]<br>Hadley Wickham, Romain Francois, R Core Team (Date time code adapted from R), RStudio <br>
-+(reshape2)[https://cran.r-project.org/web/packages/reshape2/index.html]<br>Hadley Wickham<br>
-+(stringr)[]<br><br>
-+(tidyr)[]<br><br>
-+(tidytext)[]<br><br>
-+(wordcloud)[]<br><br>
++ <b>readr</b> <br> 
+[readr](https://cran.r-project.org/web/packages/readr/index.html)
+<br>Hadley Wickham, Romain Francois, R Core Team (Date time code adapted from R), RStudio <br>
++ <b>reshape2 </b>  <br> 
+[reshape2](https://cran.r-project.org/web/packages/reshape2/index.html)
+<br>Hadley Wickham<br>
++ <b>stringr  </b>  <br>
+[stringr](https://cran.r-project.org/web/packages/stringr/index.html)<br>Hadley Wickham <br>
++ <b>tidyr</b>  <br>
+[tidyr](https://cran.r-project.org/web/packages/tidyr/index.html)<br>Hadley Wickham<br>
++ <b>tidytext</b>  <br>
+[tidytext](https://cran.rstudio.com/web/packages/tidytext/)<br>Gabriela De Queiroz [ctb], David Robinson [aut], Julia Silge [aut, cre]
+<br>
++ <b>wordcloud </b>  <br>
+[wordcloud](https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf)
+<br>Ian Fellows<br>
 
+<a id="displayText" href="javascript:toggle(100);">Show or hide to see compile time</a>
+  <div id="toggleText100" style="display: none">
+
+```{r report stop time, echo=FALSE} 
+stopTime<-timestamp()
+
+# start time
+startTime
+# stop time 
+stopTime
+```
+</div>
 
