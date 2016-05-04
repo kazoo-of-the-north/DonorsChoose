@@ -23,7 +23,6 @@ output:
    } 
   </script>
   
-
 <a id="top"></a>
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
@@ -50,14 +49,16 @@ library(reshape2)
 library(maps)
 
 theme_set(theme_bw(base_size = 16))
-
+```
+<a id="displayText" href="javascript:toggle(99);">Show or hide to see compile time setup</a>
+  <div id="toggleText99" style="display: none">  
+```{r compile time stopwatch start, echo=FALSE}
 # looking at compile times: 
 startTime<-timestamp()
 startTime
 
-
 ```
-
+</div>
 
 # A Study of the Data Provided by the Donors Choose Organization 
 by
@@ -1233,7 +1234,7 @@ We tried to get a choropleth of a 50 state map working, and [this post](https://
 <a id="displayText" href="javascript:toggle(100);">Show or hide to see compile time</a>
   <div id="toggleText100" style="display: none">
 
-```{r report stop time, echo=FALSE} 
+```{r report stop time } 
 stopTime<-timestamp()
 
 # start time
