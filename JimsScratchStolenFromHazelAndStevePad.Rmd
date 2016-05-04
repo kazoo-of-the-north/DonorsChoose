@@ -4,7 +4,21 @@ author: "Hazel John with some things added by others"
 date: "April 24, 2016"
 output: html_document
 ---
-
+<script language="javascript"> 
+    function toggle(num) {
+      var ele = document.getElementById("toggleText" + num);
+      var text = document.getElementById("displayText" + num);
+      if(ele.style.display == "block") {
+        ele.style.display = "none";
+        text.innerHTML = "show";
+      }
+      else {
+        ele.style.display = "block";
+        text.innerHTML = "hide";
+      }
+   } 
+  </script>
+  
 ```{r, eval=FALSE}
 # # Install packages we need just once
 # library(devtools)
@@ -44,7 +58,9 @@ We also save the final data sets to submit as part of the project.
 
 This is only run once and not evaluated after that since we can read data from the filtered data files directly.
 
-
+<a id="displayText" href="javascript:toggle(1);">Show underlying code</a>
+  <div id="toggleText1" style="display: none">
+  
 ```{r, eval=FALSE}
 
 # Create function to write data frame to zipped rds file
@@ -191,6 +207,8 @@ rm(projects, resources, donations, essays,
 # Cleanup memory
 gc()
 ```
+ </div>
+
 
 ## Step 2: Data Upload from disk
 
