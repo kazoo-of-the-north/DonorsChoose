@@ -305,7 +305,10 @@ This shows an even greater improvement in RMSE. In looking back at the data it w
 
 
 ```{r}
-fit_cost_only <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", family="binomial")
+
+control <- trainControl(method='cv', number=10, p=.8)
+
+fit_cost_only <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", trControl = control, family="binomial")
 
 fit_cost_only
 

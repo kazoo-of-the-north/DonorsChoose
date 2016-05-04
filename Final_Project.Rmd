@@ -457,212 +457,341 @@ essays <- uploadData("essays")
 ## Exploratory Analysis
 We began an exploration of the data to see what relationships might be discovered within it, to compare the completed and expired projects.
 
-
-```{r message=FALSE, warning=FALSE }
-
+```{r echo=FALSE}
 #add column to project df called percent_funded that tells the percent money given over asked for
 projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
+```
 
+A critical first step was to determine how to analyze success. There were two possible metrics we came up with: a binary funded or not funded outcome, or a granualar (money donated / money asked for). The granualar option would give us more options in trying to model the data, whereas the first option would require using logistic regression. To determine if the granular option was feasable we first had to look out the distribution of (money donated / money asked for) accross the proposals.
+
+here is a histogram and qqplot showing the distribution of (money donated / money asked for):
+
+```{r echo=FALSE}
 #test for normalacy of percent funded
-hist(projects$percent_funded)
+projects %>% ggplot(aes(percent_funded *100)) + geom_histogram() + xlab("Percent Donations/Funding Requested") + ylab("Number of proposals")
+  
+#hist(projects$percent_funded)
 qqnorm(projects$percent_funded)
 print("Data is nowhere near normal, looks like logistic analysis of funded vs non-funded make much more sense.")
 
-print("Will not look at different factors contained in the projects file to determine if they affect the likliehood of getting funded. There are techinically three outcomes for each request. Complete, means reached or succeeded funding goal. Expired, time ran out wihtout reaching goal. Reallocated, Did not reach goal, but donors chose to give previously pledge amount to a different proposal.")
-
-#poverty level graph
-poverty_level_graph<-projects %>% group_by(poverty_level, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(poverty_level) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(poverty_level, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
-poverty_level_graph
-
-#latitude and longitude level graph by amount of goal
-latitude_graph<-projects %>% ggplot(aes(x = school_latitude, y = percent_funded)) + geom_point() + ylab("Final Status")
-longitude_graph<-projects %>% ggplot(aes(x = school_longitude, y = percent_funded)) + geom_point() + ylab("Final Status")
-latitude_graph
-longitude_graph
 ```
-####Percentage of Fundedness Map
-The following map shows where the most projects were funded. Darker areas have more funding.
 
-```{r }
+Next, we will look at different factors contained in the projects file to determine if they affect the likliehood of getting funded. For all of the following charts Percent Funded is the number of funded grants / total applications.
+
+####Demographics
+First looked at the available demographic factors.
+
+```{r echo=FALSE}
 
 #load us map data
 all_states <- map_data("state")
 #plot all states with ggplot
-p <- projects %>% ggplot()
-p <- p + geom_polygon( data=all_states, aes(x=long, y=lat, group = group),
+map <- projects %>% ggplot()
+map <- map + geom_polygon( data=all_states, aes(x=long, y=lat, group = group),
                        colour="gray1", fill="light green" )
-p <- p + geom_point(data=projects, 
+map <- map + geom_point(data=projects, 
                     aes(y=school_latitude, x=school_longitude, 
                         size =  percent_funded * 10^-7, 
                         # or: total_price_excluding_optional_support * 10^-3,
                         label = 'Price in $1K' ), 
                     color= "blue", alpha = 1/50) + scale_size();
-p
 
-#state graph
-state_graph<-projects %>% group_by(school_state, funding_status) %>% 
+map
+
+#poverty level graph
+poverty <- projects %>% group_by(poverty_level, funding_status) %>% 
   summarise(total= n()) %>% 
-  group_by(school_state) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
+  group_by(poverty_level) %>% 
+  mutate(totals = sum(total), percent = (total/totals)*100) %>% 
   ungroup %>% 
-  ggplot(aes(school_state, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
-state_graph
-
-#school urban vs rual
-urban_vs_rural <-projects %>% group_by(school_metro, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(school_metro) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(school_metro, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
-urban_vs_rural
-
-#teacher prefix, sort of a stand in for teacher gender
-projects %>% group_by(teacher_prefix, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(teacher_prefix) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(teacher_prefix, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#charter school
-projects %>% group_by(school_charter, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(school_charter) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(school_charter, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#magnent school
-projects %>% group_by(school_magnet, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(school_magnet) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(school_magnet, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#school year round
-projects %>% group_by(school_year_round, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(school_year_round) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(school_year_round, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#new Leaders New Schools affiliated 
-projects %>% group_by(school_nlns, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(school_nlns) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(school_nlns, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#knowledge is power public charter school (KIPP)
-projects %>% group_by(school_kipp, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(school_kipp) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(school_kipp, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#school charter ready promise
-projects %>% group_by(school_charter_ready_promise, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(school_charter_ready_promise) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(school_charter_ready_promise, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#teach for america teacher
-projects %>% group_by(teacher_teach_for_america, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(teacher_teach_for_america) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(teacher_teach_for_america, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#ny teaching fellow
-projects %>% group_by(teacher_ny_teaching_fellow, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(teacher_ny_teaching_fellow) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(teacher_ny_teaching_fellow, percent)) + geom_point(aes(color = funding_status)) + ylab("Final Status")
-
-#primary focus subject
-projects %>% group_by(primary_focus_subject, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(primary_focus_subject) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(primary_focus_subject, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
-
-#primary focus area
-projects %>% group_by(primary_focus_area, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(primary_focus_area) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(primary_focus_area, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
-
-#resource type
-projects %>% group_by(resource_type, funding_status) %>% summarise(total= n()) %>% 
-  group_by(resource_type) %>% mutate(totals = sum(total), percent = total/totals) %>% ungroup %>% 
-  ggplot(aes(resource_type, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
-
-#grade level
-projects %>% group_by(grade_level, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(grade_level) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(grade_level, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8))  + ylab("Final Status")
-
-#total price excluding optional support
-projects %>% ggplot(aes(x = total_price_excluding_optional_support, y = percent_funded)) + geom_smooth()  + ylab("Final Status")
-
-#Might be a good idea to make a histogram of total price, then regraph with just the lower price
-
-#students reached
-projects %>% ggplot(aes(x = students_reached, y = percent_funded)) + geom_smooth() + ylab("Final Status")
-
-#eligible for double your impact match
-projects %>% group_by(eligible_double_your_impact_match, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(eligible_double_your_impact_match) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(eligible_double_your_impact_match, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8)) + ylab("Final Status")
-
-#eligible for almost home match
-projects %>% group_by(eligible_almost_home_match, funding_status) %>% 
-  summarise(total= n()) %>% 
-  group_by(eligible_almost_home_match) %>% 
-  mutate(totals = sum(total), percent = total/totals) %>% 
-  ungroup %>% 
-  ggplot(aes(eligible_almost_home_match, percent)) + geom_point(aes(color = funding_status)) + theme(
-    axis.text.x=element_text(angle=90, size=8))  + ylab("Final Status")
-
-#date posted
-projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + ylab("Final Status")
-
-```
+  filter(funding_status == "completed") %>%
+  ggplot(aes(poverty_level, percent, fill = poverty_level)) + geom_bar(stat="identity")  + 
+  theme(legend.position="none") + scale_fill_brewer() + 
+  theme(axis.text.x=element_text(angle=90, size=8)) + ylab("Percent Funded") 
  
 
-#### Building a Prediction Model for Proposal Success
+#state graph
+state <- projects %>% group_by(school_state, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_state) %>% 
+  mutate(totals = sum(total), percent = (total/totals)*100 ) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(school_state, percent)) + geom_bar(stat="identity", color = 'blue') +
+  theme(legend.position="none") +
+  theme(axis.text.x=element_text(angle=90, size=8)) + ylab("Percent Funded") 
+
+
+#school urban vs rual
+urban <- projects %>% group_by(school_metro, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_metro) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  filter(school_metro == "rural" | school_metro == "suburban" | school_metro == "urban") %>%
+  ggplot(aes(school_metro, percent, fill = school_metro)) + geom_bar(stat="identity") +
+  theme(legend.position="none") + scale_fill_brewer() + 
+  theme(axis.text.x=element_text(angle=90, size=8)) + ylab("Percent Funded")
+
+
+
+lay <- rbind(c(1,2),
+             c(3,3))
+
+grid.arrange(poverty, urban, state, layout_matrix = lay)
+```
+
+Although each aspect looked like it could have an effect, none really had a major effect of the funding outcome.
+
+####Teacher Attributes
+We next looked at different parameters about the requesting teacher.
+
+```{r echo=FALSE}
+
+#teacher prefix, sort of a stand in for teacher gender
+prefix <- projects %>% group_by(teacher_prefix, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(teacher_prefix) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(teacher_prefix == "Dr." | teacher_prefix == "Mr." | teacher_prefix == "Mrs." | teacher_prefix == "Ms.") %>%
+  filter(funding_status == "completed") %>%
+  ggplot(aes(teacher_prefix, percent, fill = teacher_prefix)) + geom_bar(stat="identity") + ylab("Percent Funded") + xlab("Teacher Prefix") + theme(axis.title.x=element_text(size=12)) + theme(legend.position="none") + scale_fill_brewer(palette = "Reds")
+
+#teach for america teacher
+america <- projects %>% group_by(teacher_teach_for_america, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(teacher_teach_for_america) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(teacher_teach_for_america, percent, fill = teacher_teach_for_america)) + geom_bar(stat="identity") + ylab("") + xlab("Teach for America") + theme(axis.title.x=element_text(size=12)) + scale_x_discrete(labels=c("No","Yes")) + scale_fill_brewer(palette = "Reds") + theme(legend.position="none")
+
+#ny teaching fellow
+ny <- projects %>% group_by(teacher_ny_teaching_fellow, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(teacher_ny_teaching_fellow) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(teacher_ny_teaching_fellow, percent, fill = teacher_ny_teaching_fellow)) +
+  geom_bar(stat="identity") + ylab("") + xlab ("NY Teaching Fellow") +
+  theme(axis.title.x=element_text(size=12)) + scale_x_discrete(labels=c("No","Yes")) +
+  scale_fill_brewer(palette = "Reds") + theme(legend.position="none")
+
+grid.arrange(prefix, america, ny, ncol = 3)
+```
+
+Here we can see several factors that appear to make a difference. However, The number of Drs., teach for america fellows, and NY teaching fellows is extremely small (<1% combined), and ultimately are unlikely to prove useful in predicting success for most applicants.
+
+####School Attributes
+We next looked at difference in the schools themselves. Thes factors include: were they a charter school, magnet school, New Leaders New Schools affiliate(NLNS), Knowledge is Power public charter (KIPP) school, Chart School Promise ready, and did they have school year round.
+
+```{r echo=FALSE}
+#charter school
+charter <- projects %>% group_by(school_charter, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_charter) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(school_charter, percent)) + geom_bar(stat="identity") + ylab("Percent Funded") +
+  xlab("Charter School") + theme(axis.title.x=element_text(size=12)) +
+  scale_x_discrete(labels=c("No","Yes"))
+
+#magnent school
+magnet <- projects %>% group_by(school_magnet, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_magnet) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(school_magnet, percent)) + geom_bar(stat="identity") + ylab("") + xlab("Magnet School") +
+  theme(axis.title.x=element_text(size=12)) + scale_x_discrete(labels=c("No","Yes"))
+
+#school year round
+round <- projects %>% group_by(school_year_round, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_year_round) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(school_year_round, percent)) + geom_bar(stat="identity") + ylab("") + 
+  xlab("Year Round School") + theme(axis.title.x=element_text(size=12)) +
+  scale_x_discrete(labels=c("No","Yes"))
+
+#new Leaders New Schools affiliated 
+nlns <- projects %>% group_by(school_nlns, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_nlns) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(school_nlns, percent)) + geom_bar(stat="identity") + ylab("Percent Funded") + xlab("NLNS")+
+  theme(axis.title.x=element_text(size=12)) + scale_x_discrete(labels=c("No","Yes"))
+
+#knowledge is power public charter school (KIPP)
+kipp <- projects %>% group_by(school_kipp, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_kipp) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(school_kipp, percent)) + geom_bar(stat="identity") + ylab("") + xlab("KIPP") +
+  theme(axis.title.x=element_text(size=12)) + scale_x_discrete(labels=c("No","Yes"))
+
+#school charter ready promise
+promise <- projects %>% group_by(school_charter_ready_promise, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(school_charter_ready_promise) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(school_charter_ready_promise, percent)) + geom_bar(stat="identity") + 
+  ylab("Percent Funded")+
+  xlab("Charter Promise Ready") + theme(axis.title.x=element_text(size=12)) +
+  scale_x_discrete(labels=c("No","Yes"))
+
+grid.arrange(charter, magnet, promise, nlns, kipp, round, ncol = 3)
+```
+
+Again we can se several small effects, but again all of these variables affect a very small percentage of schools.
+
+####Classroom Attributes
+We continued to look at different factors of the classroom. These include: the class subject, focus area, grade level, and number of students the proposal will reach.
+
+```{r echo=FALSE}
+#primary focus subject
+subject <- projects %>% group_by(primary_focus_subject, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(primary_focus_subject) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  filter(primary_focus_subject !='') %>%
+  ggplot(aes(primary_focus_subject, percent)) + 
+  geom_bar(stat="identity", color = 'green') + 
+  theme(axis.text.x=element_text(angle=90, size=8)) + 
+  ylab("Percent Funded") + theme(axis.title.x=element_text(size=12)) + xlab("Subject") +
+  theme(legend.position="none")
+
+#primary focus area
+focus <- projects %>% group_by(primary_focus_area, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(primary_focus_area) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  filter(primary_focus_area !='') %>%
+  ggplot(aes(primary_focus_area, percent, fill = primary_focus_area)) + geom_bar(stat="identity") + 
+  theme(axis.text.x=element_text(angle=90, size=8)) + ylab("Percent Funded") +
+  theme(axis.title.x=element_text(size=12)) + xlab ("Focus Area") +
+  scale_fill_brewer(palette = "Greens") + theme(legend.position="none")
+
+#grade level
+grade <- projects %>% group_by(grade_level, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(grade_level) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  filter(grade_level !='') %>%
+  ggplot(aes(grade_level, percent, fill = grade_level)) + geom_bar(stat="identity") + 
+  theme(axis.text.x=element_text(angle=90, size=8))  + ylab("Percent Funded") + 
+  theme(axis.title.x=element_text(size=12)) + xlab("Grade Level") +
+  scale_fill_brewer(palette = "Greens") + theme(legend.position="none")
+
+#students reached
+reached <- projects %>% ggplot(aes(x = students_reached, y = percent_funded *100)) + geom_smooth() + ylab("Percent Funded") + xlab("# Students Reached") + theme(axis.title.x=element_text(size=12))
+
+grid.arrange(subject, focus, grade, reached, ncol = 2)
+
+```
+From here we can see that focus area and grade level seem to have little affect. Certain subjects like music and team sports appear to positively correlate. The number of students reached shows an interesting trend, where it decreases with more students reached. Though initially this might not make sense, in the next section we look at the financial aspects of the proposal, which better explains this result.
+
+#### Financial Attributes
+
+```{r echo=FALSE}
+
+#resource type
+resource <- projects %>% group_by(resource_type, funding_status) %>% summarise(total= n()) %>% 
+  group_by(resource_type) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  filter(resource_type != "") %>%
+  ggplot(aes(resource_type, percent, fill = resource_type)) + geom_bar(stat="identity") + 
+  theme(axis.text.x=element_text(angle=90, size=8)) + ylab("Percent Funded") +
+  xlab("Resource Type") +
+  scale_fill_brewer(palette = "Blues") + theme(legend.position="none")
+
+#eligible for double your impact match
+double <- projects %>% group_by(eligible_double_your_impact_match, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(eligible_double_your_impact_match) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(eligible_double_your_impact_match, percent, fill = eligible_double_your_impact_match)) +
+  geom_bar(stat="identity") + 
+  ylab("Percent Funded") + scale_x_discrete(labels=c("No","Yes")) + xlab("Double Match") +
+  scale_fill_brewer(palette = "Blues") + theme(legend.position="none")
+
+#eligible for almost home match
+almost <- projects %>% group_by(eligible_almost_home_match, funding_status) %>% 
+  summarise(total= n()) %>% 
+  group_by(eligible_almost_home_match) %>% 
+  mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
+  ungroup %>% 
+  filter(funding_status == "completed") %>%
+  ggplot(aes(eligible_almost_home_match, percent, fill = eligible_almost_home_match)) +
+  geom_bar(stat="identity") + 
+  ylab("Percent Funded") + scale_x_discrete(labels=c("No","Yes")) + xlab("Almost Home Match") +
+  scale_fill_brewer(palette = "Blues") + theme(legend.position="none")
+
+#date posted
+date <- projects %>% ggplot(aes(x = date_posted, y = percent_funded * 100)) + geom_smooth() + ylab("Percent Funded") + xlab("Date Posted")
+
+#total price excluding optional support
+price <- projects %>% ggplot(aes(x = total_price_excluding_optional_support, y = percent_funded * 100)) + geom_smooth()  + ylab("Percent Funded") + xlab("Total Cost")
+
+
+lay2 <- rbind(c(1,2,3),
+             c(4,4),
+             c(5,5))
+
+grid.arrange(resource, double, almost, date, price, layout_matrix = lay2)
+
+```
+
+Here things get a little more interesting. It seems technology supplies are less likely, and books more likely to be funded. If you have matching fundings coming in you are more likely to be funding, although the almost home match is a little self fulfilling since it is given to people you are already near their goal. Date posted seems to show a seasonal effect, with the best odds right before school starts and the worst shortly after it starts. The we see total cost, and keep in mind the Y-axis we see this has the largest effect we have seen so far, with a precipitous dropoff in the beginning before leveling off. As you can see the error increases as cost increases so we thought this might be due to few proposals requesting this much. So we looked at the histogram to see the distribution of total costs of requests.
+
+```{r}
+#histogram showing cost of all proposals
+projects %>% ggplot(aes(total_price_excluding_optional_support)) + geom_histogram() + ylab("# Proposals") + xlab("Total Cost")
+```
+
+From this it appears that the fast majority of proposals request less than $1000 so we looked at the distribution and success rates below $1000.
+
+```{r}
+
+#histogram filtered to only show those propsals less than $100
+hist_filtered <- projects %>% filter(total_price_excluding_optional_support <1000) %>%
+  ggplot(aes(total_price_excluding_optional_support)) + geom_histogram() + 
+  ylab("# Proposals") + xlab("Total Cost")
+
+#Filtered total price vs sucess
+cost_filtered <- projects %>% filter(total_price_excluding_optional_support <1000) %>% ggplot(aes(x = total_price_excluding_optional_support, y = percent_funded*100)) + geom_smooth()  + ylab("Percent Funded") +
+xlab("Total Cost")
+
+grid.arrange(hist_filtered, cost_filtered)
+```
+
+Here we can draw two important conclusions. First the vast majority of proposal request less than $1000, (and most are between $100-500). Second, In this range their is a strong negative correlation with success, a correlation that appears much strong than any other factor we have analyzed so far.
+ 
+
+### Building a Prediction Model for Proposal Success
 
 The first attempt to build a model was to use the glm method in the train function and select several variables from the earlier exploratory analysis that looked to have an effect. These variables included: amount of money asked for, school state, primary focus, primary subject, resource type, date posted. We used glm because our outcome is either funded or not funded and glm works well for logistic regression.
 
