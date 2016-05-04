@@ -37,6 +37,8 @@ if (!require(wordcloud))
   install.packages("wordcloud")
 if(!require(caret))
   install.packages("caret")
+if(!require(maps))
+  install.packages("maps")
 library(ggplot2)
 library(gridExtra)
 library(readr)
@@ -45,6 +47,8 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(reshape2)
+library(maps)
+
 theme_set(theme_bw(base_size = 16))
 ```
 
@@ -481,6 +485,25 @@ latitude_graph<-projects %>% ggplot(aes(x = school_latitude, y = percent_funded)
 longitude_graph<-projects %>% ggplot(aes(x = school_longitude, y = percent_funded)) + geom_point() + ylab("Final Status")
 latitude_graph
 longitude_graph
+```
+####Percentage of Fundedness Map
+The following map shows where the most projects were funded. Darker areas have more funding.
+
+```{r }
+
+#load us map data
+all_states <- map_data("state")
+#plot all states with ggplot
+p <- projects %>% ggplot()
+p <- p + geom_polygon( data=all_states, aes(x=long, y=lat, group = group),
+                       colour="gray1", fill="light green" )
+p <- p + geom_point(data=projects, 
+                    aes(y=school_latitude, x=school_longitude, 
+                        size =  percent_funded * 10^-7, 
+                        # or: total_price_excluding_optional_support * 10^-3,
+                        label = 'Price in $1K' ), 
+                    color= "blue", alpha = 1/50) + scale_size();
+p
 
 #state graph
 state_graph<-projects %>% group_by(school_state, funding_status) %>% 
