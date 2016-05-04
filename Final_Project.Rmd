@@ -65,14 +65,14 @@ When written appeals succeed by becoming fully funded, or fail by expiring, the 
 
 We wish to apply statistical analysis of the available data in an effort to go beyond axiomatic and aesthetic beliefs regarding what makes a more or less effective funding proposal. 
 
-<a href="#top">back to top</a><br>
-
 ## Related Work
 Jim's sister is a grade school art teacher who successfully funded a 3D printer for her classroom. On last report, the best expert for this printer is a female 4th grader.
 
 Steve writes grant proposals, so it is interesting to understand what makes a good grant proposal by way of a data analysis.
 
 Hazel works with her marketing department on content marketing, personalization etc. She in interested in understanding what motivates prospects to become customers. In this case we analyze factors that encourage prospects to turn into benefactors.
+
+The DonorsChoose website publishes a [blog](http://www.donorschoose.org/blog/) of how these donations are making an impact in classrooms all across USA. The stories that are told are very powerful.
 
 Stephen Colbert made the news in 2015 [by funding every teacher's proposal for the State of South Carolina](http://time.com/3850694/stephen-colbert-funds-every-teacher-requested-grant-in-south-carolina-schools/). This did rise the national profile of Donors Choose, not only helping all the teachers in South Carolina, but also giving much needed publicity to this cause.
  
@@ -81,50 +81,44 @@ Stephen Colbert made the news in 2015 [by funding every teacher's proposal for t
 ## Initial Questions
 We set forth to answer the following questions regarding the funding proposals for Donors Choose.
 
-*What makes the difference between a proposal that is funded and one that expires?<br> 
-*Which are the winning qualities? <br>
-*Of the predicting qualities, are there any that are under the control of the writer?<br>
-*Does the content of the written essay matter?<br>
-
-<a href="#top">back to top</a><br>
+* What makes the difference between a proposal that is funded and one that expires?
+* Which are the winning qualities?
+* Of the predicting qualities, are there any that are under the control of the writer?
+* Does the content of the written essay matter?
 
 ## Data
 We are using the data made publicly available on the Donors Choose website. This publicly available comes in the form of downloadable csv files, ranging in size from megabytes to gigabytes.
-This data can be found at [here](http://data.donorschoose.org/open-data/overview/).
+This data and data documentation can be found  [here](http://data.donorschoose.org/open-data/overview/).
 
-The proposals are one element in the open data set published from the Donors Choose web site. An image of the schema showing the suggested recomposition can be found by clicking the link below, and can also be found at Donors Choose.
-<br>
-<a href="#top">back to top</a><br>
-<a id="displayText" href="javascript:toggle(4);">Show or hide source code for rm_old data cleaner</a>
+Multiple data sets are available for download including project, donations, resources and essay data sets. The database [schema](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png) and data descriptions are available as well from the Donors Choose website.
+
+<a id="displayText" href="javascript:toggle(4);">Schema Diagram</a>
   <div id="toggleText4" style="display: none">
-  This is schema diagram appears in the Donors Choose web site to serve as a diagram for the recomposition of the csv files:
+
 ![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
-<a href="#top">back to top</a><br>
 <a id="dataloader_in_r"></a>
 <br>
   
   </div>
+<br>
+<a href="#top">back to top</a><br>
 
 ### Data Wrangling
-
 
 #### Step 1: Data Download & Cleanup
 
 Our first task was to download the data, clean it up and extract the data we needed. We decided to do the analysis with just the data from 2014, so the final task was the filter out unneeded data.
 
-<a href="#top">back to top</a><br>
+#### Initial Data Wrangling Utility  
 
-#### rm_old: Our First Data Wrangling Utility 
+Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. This C++ data cleaner provided a temporary means to separate the 2014 projects records from the csv file and get the rest of the team started with the data. The source code for the intermediate c++ application, was named rm_old. 
 
-Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. This C++ data cleaner provided a temporary means to separate the 2014 projects records from the csv file and get the rest of the team started with the data. The source code for the intermediate c++ application, was named rm_old. Toggle the link below to see the source.
-<br>
-<a href="#top">back to top</a><br>
-<a id="displayText" href="javascript:toggle(1);">Show or hide source code for rm_old data cleaner</a>
+<a id="displayText" href="javascript:toggle(1);">Code: C++ Utility </a>
   <div id="toggleText1" style="display: none">
   
 The original source code of the stop gap c++ data cleaning application is below.
 <br><a id="rm_old"></a> <br>
-####c++ Source code for rm_old
+
 ```{r original cpp app, eval=FALSE, echo=TRUE}
 //
 //  main.cpp
@@ -254,7 +248,7 @@ int main(int argc, const char * argv[]) {
 </div>
 <a href="#top">back to top</a><br>
 
-### Data Wrangling in R
+#### Data Wrangling in R
 
 During analysis of the data files retrieved from the Donor's Choose website, we noticed that it contained string fields with special characters that caused errors when using the standard read utilities for comma delimited files. The first plan was to read files line by line and use "gsub" to removed unnecessary characters, but this turned out very slow. We then tried to run the UNIX utility "sed" within the "pipe" function, but the special characters like ctrl-M made that problematic. The final iteration still used "sed" by was run as a system call from R. Each file required slight variations in the search patterns so different <datatype>_clnup.sed scripts were created for each. 
 
@@ -266,7 +260,7 @@ Our final data wrangling consisted of the following steps:
 * Filtering out projects not posted in 2014
 * Storing cleaned dataframes as RDS files
 
-<a id="displayText" href="javascript:toggle(2);">Show or hide source code succeeding R data cleaner</a>
+<a id="displayText" href="javascript:toggle(2);">Code: Data Wrangling</a>
   <div id="toggleText2" style="display: none">
   
 ```{r eval=FALSE }
@@ -416,13 +410,11 @@ gc()
 ```
 </div>
 
-<a href="#top">back to top</a><br>
-
 #### Step 2: Data Upload from disk
 
 A simple function was written to upload the cleaned data from RDS files stored on disk. Once the data has been put to disk locally, this function is all that's needed to load the data objects. All data exploration and analysis was run on the uploaded data.
 
-<a id="displayText" href="javascript:toggle(3);">Show or hide source code for data load from disk</a>
+<a id="displayText" href="javascript:toggle(3);">Code: Data Upload from Disk</a>
   <div id="toggleText3" style="display: none">
   
 ```{r message=FALSE, warning=FALSE}
@@ -453,7 +445,9 @@ essays <- uploadData("essays")
 ## Exploratory Analysis
 We began an exploration of the data to see what relationships might be discovered within it, to compare the completed and expired projects.
 
-
+<a id="displayText" href="javascript:toggle(3);">Code: Analysis of Distribution</a>
+  <div id="toggleText3" style="display: none">
+  
 ```{r message=FALSE, warning=FALSE }
 
 #add column to project df called percent_funded that tells the percent money given over asked for
@@ -461,6 +455,12 @@ projects <- projects %>% mutate(percent_funded = (total_donations / total_price_
 
 #test for normalacy of percent funded
 hist(projects$percent_funded)
+```
+</div>
+
+<a id="displayText" href="javascript:toggle(3);">Code: Assessing Normality</a>
+  <div id="toggleText3" style="display: none">
+```{r}
 qqnorm(projects$percent_funded)
 print("Data is nowhere near normal, looks like logistic analysis of funded vs non-funded make much more sense.")
 
@@ -637,7 +637,7 @@ projects %>% group_by(eligible_almost_home_match, funding_status) %>%
 projects %>% ggplot(aes(x = date_posted, y = percent_funded)) + geom_smooth() + ylab("Final Status")
 
 ```
- 
+ </div>
 
 #### Building a Prediction Model for Proposal Success
 

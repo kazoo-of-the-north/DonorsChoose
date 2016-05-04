@@ -292,7 +292,8 @@ x <- projects %>% filter(floor(total_price_excluding_optional_support) > total_d
 
 # Create a numeric mapping for project_id, grade_levels, resource_types,
 # poverty_levels, primary_focus_areas, metro_type, teacher_prefix 
-# and US States
+# and US States. We could use rank directly with storing the extra data
+# frames, but it is easier to have a point of reference this way.
 project_ids <- data.frame(
                   projectid = unique(projects$`_projectid`), 
                   pid = rank(unique(projects$`_projectid`)))
@@ -362,12 +363,27 @@ projects.factored <- projects %>%
 projects.factored[projects.factored == "t"] <- 1
 projects.factored[projects.factored == "f"] <- 0
 
-# Convert the projects_factored data frame into a matrix
-projects.matrix <- as.matrix(projects.factored[,2:22])
-rownames(projects.matrix) <- projects.factored$pid
+# Create a data partition with 80% taken as training data
+set.seed(1)
+inTrain <- createDataPartition(y = projects.factored$fully_funded, p=0.8)
+train_set <- slice(projects.factored, inTrain$Resample1)
+test_set <- slice(projects.factored, -inTrain$Resample1)
+
+# Convert the train set into a matrix
+X.train <- as.matrix(train_set[,2:22])
+rownames(X.train) <- train_set$pid
 
 # Make sure the factors were converted to nummeric
-mode(projects.matrix) <- "numeric" 
+mode(X.train) <- "numeric" 
+
+# Convert the test set into a matrix
+X.test <- as.matrix(test_set[,2:22])
+rownames(X.test) <- test_set$pid
+mode(X.test) <- "numeric" 
+
+cc = cor(X.train)
+cc[is.na(cc)] <- 0 ##these are for cases with all 0s
+image(cc)
 
 # Do the PCA Analysis.We have a combination of categorical variables,
 # discrete variables and continuous variables with a large percentage
@@ -376,19 +392,21 @@ mode(projects.matrix) <- "numeric"
 # analysis to be based on correlation instead of covariance. 
 # We also use center=TRUE (default) such that the data is both centered
 # and scaled
-projects.pca <- prcomp(projects.matrix, scale=TRUE)
+X.pca <- prcomp(X.train, scale=TRUE)
 
-plot(projects.pca, type = "l")
-summary(projects.pca)$importance[,1:15]
+plot(X.pca, type = "l")
+summary(X.pca)$importance[,1:15]
 
-plot(projects.pca$sdev)
+plot(X.pca$sdev)
 
-projects.pca2 <- prcomp(projects.matrix, scale=TRUE, center=FALSE)
 
-plot(projects.pca2, type = "l")
-summary(projects.pca2)$importance[,1:15]
+model <- glm(train_set$fully_funded ~ X.pca$x[,1:8], family=binomial)
+summary(model)
 
-plot(projects.pca2$sdev)
+test.p <- predict(X.pca, newdata = X.test)
+pred <- predict(model, newdata = data.frame(test.p), type = "response")
+pred_funded <- factor(ifelse(pred >= 0.5, "expired", "completed"))
+table(test_set$fully_funded, pred_funded)
 
 rt <- projects.factored %>% 
   left_join(resource_types, by = "resource_id") %>%
@@ -517,7 +535,19 @@ success_standout_sentiments <- anti_join(words_unmatched %>%
 # "expired" projects
 print(success_standout_sentiments)
 
-# Now look 
+# Now look at words that occur in "completed" projects with these
+# sentiments and don't show up much in "expired" projects
+success_words <- words_unmatched %>%
+  filter(pct_rank_diff > 0) %>%
+  inner_join(success_standout_sentiments, by = "sentiment")
+
+x <- success_words %>% 
+  left_join(essays_tokenized, by = "essay_words") %>% 
+  left_join(projects, by = "_projectid") %>% 
+  select(`_projectid`, funding_status,
+         total_price_excluding_optional_support, resource_type,
+         grade_level, teacher_prefix, students_reached, school_state)
+
 # "Students" stands out for both "completed" and "expired" projects,
 # So create word clouds without it, to see the rest better
 essays_word_freq <- essays_word_freq %>%
