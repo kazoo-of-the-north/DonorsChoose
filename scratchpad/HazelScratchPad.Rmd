@@ -366,8 +366,10 @@ projects.factored[projects.factored == "f"] <- 0
 # Create a data partition with 80% taken as training data
 set.seed(1)
 inTrain <- createDataPartition(y = projects.factored$fully_funded, p=0.8)
-train_set <- slice(projects.factored, inTrain$Resample1)
-test_set <- slice(projects.factored, -inTrain$Resample1)
+train_set <- slice(select(projects.factored, -fundedness),
+                   inTrain$Resample1)
+test_set <- slice(select(projects.factored, -fundedness),
+                  -inTrain$Resample1)
 
 # Convert the train set into a matrix
 X.train <- as.matrix(train_set[,2:22])
@@ -398,13 +400,25 @@ plot(X.pca, type = "l")
 summary(X.pca)$importance[,1:15]
 
 plot(X.pca$sdev)
-
-
-model <- glm(train_set$fully_funded ~ X.pca$x[,1:8], family=binomial)
+library(ggrepel)
+tmp <- data.frame(X.pca$rotation, name = colnames(X.train),
+                  stringsAsFactors = FALSE) 
+tmp %>%  ggplot(aes(PC1, PC2)) + geom_point() + 
+  geom_text_repel(aes(PC1, PC2, label=name),
+                  data = filter(tmp, 
+                                PC1 < -0.1 | PC1 >0.1 | PC2 < -0.15 | PC2>0.0))
+k <- 8
+pred <- X.pca$x[,1:k] %*% t(X.pca$rotation[,1:k])
+colnames(pred) <- colnames(X.train)
+newdat<-X.pca$x[,1:8]
+model <- glm(train_set$fully_funded ~ X.pca$x[,1:21],
+             family=binomial("logit"))
+pred <- fitted(model)
+pred_funded <- factor(ifelse(pred >= 0.5, "completed", "expired"))
+table(train_set$fully_funded, pred_funded)
 summary(model)
 
-test.p <- predict(X.pca, newdata = X.test)
-pred <- predict(model, newdata = data.frame(test.p), type = "response")
+pred <- predict(model, newdata = data.frame(X.test), type = "response")
 pred_funded <- factor(ifelse(pred >= 0.5, "expired", "completed"))
 table(test_set$fully_funded, pred_funded)
 

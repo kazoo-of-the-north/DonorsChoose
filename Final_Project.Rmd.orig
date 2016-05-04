@@ -1,6 +1,6 @@
 ---
-title: "Donors Choose Funding Analysis"
-author: "Steve Henle, Hazel John, and Jim Schlough"
+title: "Final Project"
+author: "The Steve Henle, Hazel John, and Jim Schlough Group"
 date: "April 28, 2016"
 output:
   html_document:
@@ -8,7 +8,6 @@ output:
     toc_depth: 5
     fig_caption: true
 ---
-
 <script language="javascript"> 
     function toggle(num) {
       var ele = document.getElementById("toggleText" + num);
@@ -23,6 +22,7 @@ output:
       }
    } 
   </script>
+  
 
 <a id="top"></a>
 
@@ -31,23 +31,14 @@ require(knitr)
 opts_chunk$set(cache = TRUE, message = FALSE)
 
 # Load required libraries
-if (!require(tidytext)) {
-  library(devtools)
-  devtools::install_github("juliasilge/tidytext")
-  library(tidytext)
-}
-if (!require(wordcloud)) {
-  install.packages("wordcloud", repos="http://cran.rstudio.com/")
-  library(wordcloud)
-}
-if(!require(caret)) {
-  install.packages("caret", repos="http://cran.rstudio.com/")
-  library(caret)
-}
-if(!require(maps)) {
-  install.packages("maps", repos="http://cran.rstudio.com/")
-  library(maps)
-}
+if (!require(tidytext))
+  install.packages("tidytext")
+if (!require(wordcloud))
+  install.packages("wordcloud")
+if(!require(caret))
+  install.packages("caret")
+if(!require(maps))
+  install.packages("maps")
 library(ggplot2)
 library(gridExtra)
 library(readr)
@@ -56,9 +47,16 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(reshape2)
+library(maps)
 
 theme_set(theme_bw(base_size = 16))
 ```
+
+# A Study of the Data Provided by the Donors Choose Organization 
+by
+Steve Henle<br>
+Hazel John<br>
+Jim Schlough<br>
 
 ## Overview and Motivation
 Funding the contemporary K-12 classroom is greatly challenging and many teachers believe that resources provided are insufficient in meeting the most basic objectives. Nontraditional support is playing an increasingly important part in supporting the modern classroom. 
@@ -78,7 +76,7 @@ Steve writes grant proposals, so it is interesting to understand what makes a go
 
 Hazel works with her marketing department on content marketing, personalization etc. She in interested in understanding what motivates prospects to become customers. In this case we analyze factors that encourage prospects to turn into benefactors.
 
-The DonorsChoose website publishes blogs about [education and classrooms](http://www.donorschoose.org/blog/) as well as a data [blog](http://data.donorschoose.org/) . These blogs tell a powerful story about people, data, outreach and impact.
+The DonorsChoose website publishes a [blog](http://www.donorschoose.org/blog/) of how these donations are making an impact in classrooms all across USA. The stories that are told are very powerful.
 
 Stephen Colbert made the news in 2015 [by funding every teacher's proposal for the State of South Carolina](http://time.com/3850694/stephen-colbert-funds-every-teacher-requested-grant-in-south-carolina-schools/). This did rise the national profile of Donors Choose, not only helping all the teachers in South Carolina, but also giving much needed publicity to this cause.
  
@@ -98,8 +96,8 @@ This data and data documentation can be found  [here](http://data.donorschoose.o
 
 Multiple data sets are available for download including project, donations, resources and essay data sets. The database [schema](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png) and data descriptions are available as well from the Donors Choose website.
 
-<a id="displayText" href="javascript:toggle(1);">Schema Diagram</a>
-  <div id="toggleText1" style="display: none">
+<a id="displayText" href="javascript:toggle(4);">Schema Diagram</a>
+  <div id="toggleText4" style="display: none">
 
 ![](http://i0.wp.com/data.donorschoose.org/wp-content/uploads/2013/12/DonorsChoose-org-data-schema-04012011.png)
 <a id="dataloader_in_r"></a>
@@ -119,8 +117,8 @@ Our first task was to download the data, clean it up and extract the data we nee
 
 Our first plan was to use a combination of AWK and SED to do the necessary data cleanup, but time & date fields proved to be problematic. After an evening of steady efforts along those lines, a C++ data cleaning application was written as a stop gap measure. This C++ data cleaner provided a temporary means to separate the 2014 projects records from the csv file and get the rest of the team started with the data. The source code for the intermediate c++ application, was named rm_old. 
 
-<a id="displayText" href="javascript:toggle(2);">Code: C++ Utility </a>
-  <div id="toggleText2" style="display: none">
+<a id="displayText" href="javascript:toggle(1);">Code: C++ Utility </a>
+  <div id="toggleText1" style="display: none">
   
 The original source code of the stop gap c++ data cleaning application is below.
 <br><a id="rm_old"></a> <br>
@@ -266,8 +264,8 @@ Our final data wrangling consisted of the following steps:
 * Filtering out projects not posted in 2014
 * Storing cleaned dataframes as RDS files
 
-<a id="displayText" href="javascript:toggle(3);">Code: Data Wrangling</a>
-  <div id="toggleText3" style="display: none">
+<a id="displayText" href="javascript:toggle(2);">Code: Data Wrangling</a>
+  <div id="toggleText2" style="display: none">
   
 ```{r eval=FALSE }
 # Create function to write data frame to zipped rds file
@@ -420,8 +418,8 @@ gc()
 
 A simple function was written to upload the cleaned data from RDS files stored on disk. Once the data has been put to disk locally, this function is all that's needed to load the data objects. All data exploration and analysis was run on the uploaded data.
 
-<a id="displayText" href="javascript:toggle(4);">Code: Data Upload from Disk</a>
-  <div id="toggleText4" style="display: none">
+<a id="displayText" href="javascript:toggle(3);">Code: Data Upload from Disk</a>
+  <div id="toggleText3" style="display: none">
   
 ```{r message=FALSE, warning=FALSE}
 
@@ -451,67 +449,65 @@ essays <- uploadData("essays")
 ## Exploratory Analysis
 We began an exploration of the data to see what relationships might be discovered within it, to compare the completed and expired projects.
 
-<a id="displayText" href="javascript:toggle(5);">Code: Data Preparation</a>
-  <div id="toggleText5" style="display: none">
+<<<<<<< HEAD
+<a id="displayText" href="javascript:toggle(3);">Code: Analysis of Distribution</a>
+  <div id="toggleText3" style="display: none">
   
-```{r warning=FALSE}
+```{r message=FALSE, warning=FALSE }
+
+=======
+```{r echo=FALSE}
+>>>>>>> 12cb972e82eca7aa8feeb9c8c4f41bfbc398a142
 #add column to project df called percent_funded that tells the percent money given over asked for
 projects <- projects %>% mutate(percent_funded = (total_donations / total_price_including_optional_support))
 ```
-</div>
 
 A critical first step was to determine how to analyze success. There were two possible metrics we came up with: a binary funded or not funded outcome, or a granualar (money donated / money asked for). The granualar option would give us more options in trying to model the data, whereas the first option would require using logistic regression. To determine if the granular option was feasable we first had to look out the distribution of (money donated / money asked for) accross the proposals.
 
-Here is a histogram and qqplot showing the distribution of (money donated / money asked for):
+here is a histogram and qqplot showing the distribution of (money donated / money asked for):
 
 ```{r echo=FALSE}
 #test for normalacy of percent funded
-projects %>% ggplot(aes(percent_funded *100)) + geom_histogram() + xlab("Percent Donations/Funding Requested") + ylab("Number of proposals")
+<<<<<<< HEAD
+hist(projects$percent_funded)
+```
+</div>
 
+<a id="displayText" href="javascript:toggle(3);">Code: Assessing Normality</a>
+  <div id="toggleText3" style="display: none">
+```{r}
+=======
+projects %>% ggplot(aes(percent_funded *100)) + geom_histogram() + xlab("Percent Donations/Funding Requested") + ylab("Number of proposals")
+  
 #hist(projects$percent_funded)
+>>>>>>> 12cb972e82eca7aa8feeb9c8c4f41bfbc398a142
 qqnorm(projects$percent_funded)
+print("Data is nowhere near normal, looks like logistic analysis of funded vs non-funded make much more sense.")
 
 ```
-
-Data is nowhere near normal, looks like logistic analysis of funded vs non-funded make much more sense.
 
 Next, we will look at different factors contained in the projects file to determine if they affect the likliehood of getting funded. For all of the following charts Percent Funded is the number of funded grants / total applications.
 
 ####Demographics
+First looked at the available demographic factors.
 
-We started by taking a quick look at percenge funding of projects across all states.
-
-<a id="displayText" href="javascript:toggle(6);">Code: Distribution Across US </a>
-  <div id="toggleText6" style="display: none">
-
-```{r warning=FALSE}
+```{r echo=FALSE}
 
 #load us map data
 all_states <- map_data("state")
 #plot all states with ggplot
 map <- projects %>% ggplot()
-map <- map + geom_polygon( data=all_states, 
-                           aes(x=long, y=lat, group = group),
-                           colour="gray1", fill="light green" )
+map <- map + geom_polygon( data=all_states, aes(x=long, y=lat, group = group),
+                       colour="gray1", fill="light green" )
 map <- map + geom_point(data=projects, 
-                        aes(y=school_latitude, x=school_longitude, 
-                            size =  percent_funded * 10^-7, 
-                            # or: total_price_excluding_optional_support * 10^-3,
-                            label = 'Price in $1K' ), 
-                        color= "blue", alpha = 1/50) + scale_size();
-```
-</div>
+                    aes(y=school_latitude, x=school_longitude, 
+                        size =  percent_funded * 10^-7, 
+                        # or: total_price_excluding_optional_support * 10^-3,
+                        label = 'Price in $1K' ), 
+                    color= "blue", alpha = 1/50) + scale_size();
 
-```{r}
 map
-```
 
-We then explored the available demographic factors further.
-
-<a id="displayText" href="javascript:toggle(7);">Code: Analysis of Demographics </a>
-  <div id="toggleText7" style="display: none">
-  
-```{r}
 #poverty level graph
 poverty <- projects %>% group_by(poverty_level, funding_status) %>% 
   summarise(total= n()) %>% 
@@ -521,10 +517,8 @@ poverty <- projects %>% group_by(poverty_level, funding_status) %>%
   filter(funding_status == "completed") %>%
   ggplot(aes(poverty_level, percent, fill = poverty_level)) + geom_bar(stat="identity")  + 
   theme(legend.position="none") + scale_fill_brewer() + 
-  theme(axis.text.x=element_text(angle=90, size=8),
-        plot.margin = unit(c(3,0,3,0),"mm")) + 
-  ylab("Percent Funded") 
-
+  theme(axis.text.x=element_text(angle=90, size=8)) + ylab("Percent Funded") 
+ 
 
 #state graph
 state <- projects %>% group_by(school_state, funding_status) %>% 
@@ -535,9 +529,7 @@ state <- projects %>% group_by(school_state, funding_status) %>%
   filter(funding_status == "completed") %>%
   ggplot(aes(school_state, percent)) + geom_bar(stat="identity", color = 'blue') +
   theme(legend.position="none") +
-  theme(axis.text.x=element_text(angle=90, size=8),
-        plot.margin = unit(c(3,0,3,0),"mm")) + 
-  ylab("Percent Funded") 
+  theme(axis.text.x=element_text(angle=90, size=8)) + ylab("Percent Funded") 
 
 
 #school urban vs rual
@@ -547,19 +539,13 @@ urban <- projects %>% group_by(school_metro, funding_status) %>%
   mutate(totals = sum(total), percent = (total/totals) * 100) %>% 
   ungroup %>% 
   filter(funding_status == "completed") %>%
-  filter(school_metro == "rural" | school_metro == "suburban" |
-           school_metro == "urban") %>%
-  ggplot(aes(school_metro, percent, fill = school_metro)) +
-  geom_bar(stat="identity") +
+  filter(school_metro == "rural" | school_metro == "suburban" | school_metro == "urban") %>%
+  ggplot(aes(school_metro, percent, fill = school_metro)) + geom_bar(stat="identity") +
   theme(legend.position="none") + scale_fill_brewer() + 
-  theme(axis.text.x=element_text(angle=90, size=8),
-        plot.margin = unit(c(3,0,3,0),"mm")) + 
-  ylab("Percent Funded")
+  theme(axis.text.x=element_text(angle=90, size=8)) + ylab("Percent Funded")
 
-```
-</div>
 
-```{r echo=FALSE, warning=FALSE}
+
 lay <- rbind(c(1,2),
              c(3,3))
 
@@ -571,10 +557,7 @@ Although each aspect looked like it could have an effect, none really had a majo
 ####Teacher Attributes
 We next looked at different parameters about the requesting teacher.
 
-<a id="displayText" href="javascript:toggle(8);">Code: Analysis of Teacher Qualification </a>
-  <div id="toggleText8" style="display: none">
-  
-```{r warning=FALSE}
+```{r echo=FALSE}
 
 #teacher prefix, sort of a stand in for teacher gender
 prefix <- projects %>% group_by(teacher_prefix, funding_status) %>% 
@@ -606,23 +589,16 @@ ny <- projects %>% group_by(teacher_ny_teaching_fellow, funding_status) %>%
   geom_bar(stat="identity") + ylab("") + xlab ("NY Teaching Fellow") +
   theme(axis.title.x=element_text(size=12)) + scale_x_discrete(labels=c("No","Yes")) +
   scale_fill_brewer(palette = "Reds") + theme(legend.position="none")
-```
-</div>
 
-```{r warning=FALSE}
 grid.arrange(prefix, america, ny, ncol = 3)
 ```
-
 
 Here we can see several factors that appear to make a difference. However, The number of Drs., teach for america fellows, and NY teaching fellows is extremely small (<1% combined), and ultimately are unlikely to prove useful in predicting success for most applicants.
 
 ####School Attributes
 We next looked at difference in the schools themselves. Thes factors include: were they a charter school, magnet school, New Leaders New Schools affiliate(NLNS), Knowledge is Power public charter (KIPP) school, Chart School Promise ready, and did they have school year round.
 
-<a id="displayText" href="javascript:toggle(9);">Code: Analysis of School Attributes </a>
-  <div id="toggleText9" style="display: none">
-  
-```{r warning=FALSE}
+```{r echo=FALSE}
 #charter school
 charter <- projects %>% group_by(school_charter, funding_status) %>% 
   summarise(total= n()) %>% 
@@ -686,22 +662,16 @@ promise <- projects %>% group_by(school_charter_ready_promise, funding_status) %
   ylab("Percent Funded")+
   xlab("Charter Promise Ready") + theme(axis.title.x=element_text(size=12)) +
   scale_x_discrete(labels=c("No","Yes"))
-```
-</div>
 
-```{r warning=FALSE}
 grid.arrange(charter, magnet, promise, nlns, kipp, round, ncol = 3)
 ```
 
-Again we can see several small effects, but all of these variables only affect a very small percentage of schools.
+Again we can se several small effects, but again all of these variables affect a very small percentage of schools.
 
 ####Classroom Attributes
 We continued to look at different factors of the classroom. These include: the class subject, focus area, grade level, and number of students the proposal will reach.
 
-<a id="displayText" href="javascript:toggle(10);">Code: Analysis of Classroom Attributes </a>
-  <div id="toggleText10" style="display: none">
-  
-```{r warning=FALSE}
+```{r echo=FALSE}
 #primary focus subject
 subject <- projects %>% group_by(primary_focus_subject, funding_status) %>% 
   summarise(total= n()) %>% 
@@ -744,21 +714,15 @@ grade <- projects %>% group_by(grade_level, funding_status) %>%
 
 #students reached
 reached <- projects %>% ggplot(aes(x = students_reached, y = percent_funded *100)) + geom_smooth() + ylab("Percent Funded") + xlab("# Students Reached") + theme(axis.title.x=element_text(size=12))
-```
-</div>
 
-```{r warning=FALSE}
 grid.arrange(subject, focus, grade, reached, ncol = 2)
-```
 
+```
 From here we can see that focus area and grade level seem to have little affect. Certain subjects like music and team sports appear to positively correlate. The number of students reached shows an interesting trend, where it decreases with more students reached. Though initially this might not make sense, in the next section we look at the financial aspects of the proposal, which better explains this result.
 
 #### Financial Attributes
 
-<a id="displayText" href="javascript:toggle(11);">Code: Analysis of Financial Attributes </a>
-  <div id="toggleText11" style="display: none">
-  
-```{r warning=FALSE}
+```{r echo=FALSE}
 
 #resource type
 resource <- projects %>% group_by(resource_type, funding_status) %>% summarise(total= n()) %>% 
@@ -802,10 +766,7 @@ date <- projects %>% ggplot(aes(x = date_posted, y = percent_funded * 100)) + ge
 #total price excluding optional support
 price <- projects %>% ggplot(aes(x = total_price_excluding_optional_support, y = percent_funded * 100)) + geom_smooth()  + ylab("Percent Funded") + xlab("Total Cost")
 
-```
-</div>
 
-```{r warning=FALSE}
 lay2 <- rbind(c(1,2,3),
              c(4,4),
              c(5,5))
@@ -813,19 +774,19 @@ lay2 <- rbind(c(1,2,3),
 grid.arrange(resource, double, almost, date, price, layout_matrix = lay2)
 
 ```
+<<<<<<< HEAD
+ </div>
+=======
 
 Here things get a little more interesting. It seems technology supplies are less likely, and books more likely to be funded. If you have matching fundings coming in you are more likely to be funding, although the almost home match is a little self fulfilling since it is given to people you are already near their goal. Date posted seems to show a seasonal effect, with the best odds right before school starts and the worst shortly after it starts. The we see total cost, and keep in mind the Y-axis we see this has the largest effect we have seen so far, with a precipitous dropoff in the beginning before leveling off. As you can see the error increases as cost increases so we thought this might be due to few proposals requesting this much. So we looked at the histogram to see the distribution of total costs of requests.
 
-```{r warning=FALSE}
+```{r}
 #histogram showing cost of all proposals
 projects %>% ggplot(aes(total_price_excluding_optional_support)) + geom_histogram() + ylab("# Proposals") + xlab("Total Cost")
 ```
 
 From this it appears that the fast majority of proposals request less than $1000 so we looked at the distribution and success rates below $1000.
 
-<a id="displayText" href="javascript:toggle(12);">Code: Distribution of lower cose projects </a>
-  <div id="toggleText12" style="display: none">
-  
 ```{r}
 
 #histogram filtered to only show those propsals less than $100
@@ -836,42 +797,31 @@ hist_filtered <- projects %>% filter(total_price_excluding_optional_support <100
 #Filtered total price vs sucess
 cost_filtered <- projects %>% filter(total_price_excluding_optional_support <1000) %>% ggplot(aes(x = total_price_excluding_optional_support, y = percent_funded*100)) + geom_smooth()  + ylab("Percent Funded") +
 xlab("Total Cost")
-```
-</div>
 
-```{r warning=FALSE}
 grid.arrange(hist_filtered, cost_filtered)
 ```
 
 Here we can draw two important conclusions. First the vast majority of proposal request less than $1000, (and most are between $100-500). Second, In this range their is a strong negative correlation with success, a correlation that appears much strong than any other factor we have analyzed so far.
  
+>>>>>>> 12cb972e82eca7aa8feeb9c8c4f41bfbc398a142
 
 ### Building a Prediction Model for Proposal Success
 
 The first attempt to build a model was to use the glm method in the train function and select several variables from the earlier exploratory analysis that looked to have an effect. These variables included: amount of money asked for, school state, primary focus, primary subject, resource type, date posted. We used glm because our outcome is either funded or not funded and glm works well for logistic regression.
 
-<a id="displayText" href="javascript:toggle(13);">Code: Model Fitting (1) </a>
-  <div id="toggleText13" style="display: none">
-  
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 #create column for binary 1 = funded, 0 = not funded regression
 projects <- projects %>% mutate(funded = ifelse(funding_status == "completed", 1 , 0))
 
 fit_selected_components <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + school_charter + primary_focus_subject + students_reached + school_state + resource_type + date_posted,  data=projects, method="glm", family="binomial")
-```
-</div>
 
-```{r }
 fit_selected_components
 
 ```
 
 The RMSE from this method is not great, but it is a start so we tried to improve on it. First we filtered out some of the uncommon variables, that appeared to have an effect in the exploratory analysis. For example if the teacher was in teacher in teach for America, a New York teach fellow, was it a charter school, or other school types. All total these only filtered out few percent of the applications, and are factors the requesters can't change so they are not useful in building a prediction model. We then ran the training again.
 
-<a id="displayText" href="javascript:toggle(14);">Code: Model Fitting (2) </a>
-  <div id="toggleText14" style="display: none">
-  
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 
 #fliter out less used variables
 projects2 <- projects %>% filter(school_year_round == 'f'& school_magnet == 'f'& school_charter == 'f'& school_nlns == 'f'& school_kipp == 'f'& school_charter_ready_promise == 'f'& teacher_teach_for_america == 'f'& teacher_ny_teaching_fellow == 'f')
@@ -879,42 +829,26 @@ projects2 <- projects %>% filter(school_year_round == 'f'& school_magnet == 'f'&
 #run train again
 fit_selected_components_filtered <- train(funded ~ total_price_excluding_optional_support + primary_focus_area + primary_focus_subject + students_reached + school_state + resource_type + date_posted,  data=projects2, method="glm", family="binomial")
 
-```
-</div>
-
-```{r}
 fit_selected_components_filtered
 
 ```
 
 Removing these proposals did show an effect in an improvement of RMSE, even though it is . The next approach was that perhaps our model was trying to fit to many parameters, so we pared it down to only include the factors that the exploratory analysis showed to have the greatest effect. These factors were: cost, date of posting, and resource type.
 
-<a id="displayText" href="javascript:toggle(15);">Code: Model Fitting (3) </a>
-  <div id="toggleText15" style="display: none">
-  
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 #run train again using most selective variables
 fit_more_selective_components <- train(funded ~ total_price_excluding_optional_support +  date_posted + resource_type,  data=projects2, method="glm", family="binomial")
-```
-</div>
 
-```{r echo=FALSE}
 fit_more_selective_components
 
 ```
 
 This shows an even greater improvement in RMSE. In looking back at the data it was clear that the cost requested has the strongest effect. So we decided to run train again to see if that variable alone might improve our accurary (as shown by RMSE).
 
-<a id="displayText" href="javascript:toggle(16);">Code: Final Model </a>
-  <div id="toggleText16" style="display: none">
-  
-```{r message=FALSE, warning=FALSE}
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 fit_cost_only <- train(funded ~ total_price_excluding_optional_support,  data=projects2, method="glm", family="binomial")
 
-```
-</div>
-
-```{r}
 fit_cost_only
 
 ```
@@ -935,10 +869,8 @@ As part of the data available from the DonorsChoose website, we were able to dow
 **Sentiment Analysis**
 
 We started by tokenizing the essay words and then using the sentiment lexicon from "nrc" to assign sentiments to the words. We then computed the percentage occurance for the sentiments in essays grouped by the funding status of the projects and compared the difference betweed "completed" and "expired" projects.
-
-<a id="displayText" href="javascript:toggle(17);">Code: Sentiment Analysis</a>
-  <div id="toggleText17" style="display: none"> 
-  
+<a id="displayText" href="javascript:toggle(6);">Show or hide source code for sentiment analysis</a>
+  <div id="toggleText6" style="display: none"> 
 ```{r message=FALSE, warning=FALSE}
 
 # Tokenize the essay and remove stop words and include only
@@ -976,7 +908,7 @@ essays_sentiment_freq <-
 ```
 </div>
 
-```{r warning=FALSE}
+```{r}
 
 # Plot the sentiment frequency and seperate by funding status
 essays_sentiment_freq %>%
@@ -1007,10 +939,9 @@ rm(temp)
 
 We then analyzed the occurance of specific words in the essays for insights. We started by looking at the top 10 words for both fully funded and expired projects.
 
-<a id="displayText" href="javascript:toggle(18);">Code: Word Analysis</a>
-  <div id="toggleText18" style="display: none">
-  
-```{r message=FALSE, warning=FALSE}
+<a id="displayText" href="javascript:toggle(7);">Show or hide source code for Word Analysis</a>
+  <div id="toggleText7" style="display: none">
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Compute word frequency in essays regardless of sentiment
 # or funding_status
 essays_word_freq <-
@@ -1087,10 +1018,7 @@ Looking at the wordcloud, one of the things that stood out were the higher relat
 
 Further analysis was done to see if we could identify words that occur at a high frequency in essays associated with either "completed" and "expired" projects, but don't show up in the other. We extracted the sentiments for those words to see if there were particular sentiments that are related to those words.
 
-<a id="displayText" href="javascript:toggle(19);">Code: Success Words Analysis</a>
-  <div id="toggleText19" style="display: none">
-  
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Find words that rank high for "completed" essays but are at
 # least 75% points lower in "expired" essays and vice versa
 # The words are ranked based off of percentage of occurance 
@@ -1115,26 +1043,22 @@ success_standout_sentiments <- anti_join(words_unmatched %>%
                                            select(sentiment),
                                          by = "sentiment")
 
-```
-</div>
-
-```{r}
 # Print out the sentiments for the words that appear often in
 # essays for "completed" projects, but not in essays for 
 # "expired" projects
 print(success_standout_sentiments)
+
 ```
 
-We were able to identify "surprise" and "anticipation" as sentiments associated with words that show up more in essays associated with "completed" projects as opposed to "expired" projects.
+We were able to identify "surprise" and "anticipation" as sentiments that show up more in essays associated with "completed" projects as opposed to "expired" projects.
 
 <a href="#top">back to top</a><br>
 
 #### Essay Length Analysis:  Comparing the word count for completed vs expired projects
 We took a look to see, does the length that an essay has in terms of word count matter?
 
-<a id="displayText" href="javascript:toggle(20);">Code: Word Count Analysis</a>
-  <div id="toggleText20" style="display: none">
-  
+<a id="displayText" href="javascript:toggle(9);">Show or hide source code for data load from disk</a>
+  <div id="toggleText9" style="display: none">
 ```{r win loss word breakdowns,  message=FALSE, warning=FALSE}
 
 # getting some mutually exclusive sets of winning vs losing words
