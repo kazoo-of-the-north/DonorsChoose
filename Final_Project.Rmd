@@ -63,6 +63,8 @@ theme_set(theme_bw(base_size = 16))
   <div id="toggleText99" style="display: none">  
 ```{r compile time stopwatch start, echo=FALSE}
 # looking at compile times: 
+if (exists("startTime")) {rm(startTime );}
+if (exists("stopTime")) {rm(stopTime);}
 startTime<-timestamp()
 startTime
 
@@ -86,12 +88,17 @@ Jim's sister is a grade school art teacher who successfully funded a 3D printer 
 
 Steve writes grant proposals, so it is interesting to understand what makes a good grant proposal by way of a data analysis.
 
-Hazel works with her marketing department on content marketing, personalization etc. She in interested in understanding what motivates prospects to become customers. In this case we analyze factors that encourage prospects to turn into benefactors.
-
-The DonorsChoose website publishes blogs about [education and classrooms](http://www.donorschoose.org/blog/) as well as a data [blog](http://data.donorschoose.org/) . These blogs tell a powerful story about people, data, outreach and impact.
+Hazel works with her marketing department on content marketing, personalization etc. She is interested in understanding what motivates prospects to become customers. In this case we analyze factors that encourage prospects to turn into benefactors.
 
 Stephen Colbert made the news in 2015 [by funding every teacher's proposal for the State of South Carolina](http://time.com/3850694/stephen-colbert-funds-every-teacher-requested-grant-in-south-carolina-schools/). This did rise the national profile of Donors Choose, not only helping all the teachers in South Carolina, but also giving much needed publicity to this cause.
- 
+
+The Donors Choose platform has been held up as a model for transparency, and has encouraged both informal and formal study of its data. A little more than 13 years of static data have been made available to the data analyzing public. There is also an API to show a live, tickertape style feed of projects.
+
+There was the [2014 KDD Cup](https://www.kaggle.com/c/kdd-cup-2014-predicting-excitement-at-donors-choose) to predict the excitement surrounding a given project proposal on Donors Choose. KDD stands for _Knowledge, Discovery, and Data Mining_. This contest was given the name: "Predict funding requests that deserve an A+"
+
+[Here](http://jcberk.com/donorschoose/) is one of the better examples of research done surrounding the Donors Choose data, by JC Berk, _et al_.
+
+
 <a href="#top">back to top</a><br>
 
 ## Initial Questions
@@ -1244,10 +1251,10 @@ The title of a teacher might provide an indicator of advanced education. A posit
 ###Aspects of Essays
 We looked at sentiments evoked by the word choise of essays in projects that were both completed and expired, and also the length of the number of words within the essays. No great differences were found within the word choice and essay lengths.<br>
 
-####Essary Word Selection Sentiments
+####Essay Word Selection Sentiments
 Greater similarity than dissimilarity was found among word selection within the essarys. Words expressing excitement were found with with greater frequency among the essarys within funded projects.<br>
 
-####Essary Word Counts
+####Essay Word Counts
 On average, essays were about 301 words long for both essays that were funded or not, so this did not really show any predictive effect. Perhaps the best use of this information is in the context of explaining the difficulty in preparing this part of the project by the teacher.<br>
 
 ###The Seasonal Effect
@@ -1259,11 +1266,12 @@ These involve factors regarding school and classroom properties and attributes. 
 ###Project Cost
 Of all of the predictors, the total project cost was found to the be most significant. It is not really suprising that the most wins in endurance races are the ones having the shortest finish lines.<br>
 
-###Conculusion
+###Conclusion
 We wish to salute all teachers who accept the challenges of providing education to a world in extreme need. We hope that this may be of some services to those who seek to education, so that they can have the resources they need in pursuit of this noble goal.
-
 <br>
-###Recommendations for Donors Choose Projects
+
+###Recommendations for Donors Choose Projects 
+
 *All projects that are unsubmitted fail. The presence of a submission is perhaps the most important factor, and is unexamined here.
 *Keep request size in terms of dollars as small as possible.
 *Submit projects within the month prior to the beginning of the school year. This might be most important for school administrators, who should consider that many teachers need to work Summer jobs.
