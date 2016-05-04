@@ -488,29 +488,34 @@ p2 <- essays_word_freq %>%
 
 grid.arrange(p1, p2, nrow=1)
 
-# Rank words based off of percentage of occurance in completed and
-# essays
-essays_word_rank <- essays_word_freq %>%
-  mutate(pct_rank_completed = percent_rank(completed_freq),
-         pct_rank_expired = percent_rank(expired_freq))
-
 # Find words that rank high for "completed" essays but are at
 # least 75% points lower in "expired" essays and vice versa
-words_unmatched <- essays_word_rank %>%
-  filter(abs(pct_rank_completed-pct_rank_expired) > 0.75)
+# The words are ranked based off of percentage of occurance 
+# in completed and essays. Add sentiments for those words
+words_unmatched <- essays_word_freq %>%
+  mutate(pct_rank_completed = percent_rank(completed_freq),
+         pct_rank_expired = percent_rank(expired_freq)) %>%
+  mutate(pct_rank_diff = (pct_rank_completed-pct_rank_expired)) %>%
+  filter(abs(pct_rank_completed-pct_rank_expired) > 0.75) %>%
+  left_join(nrc, by = c("essay_words" = "word")) %>%
+  arrange(wt=abs(pct_rank_diff))
 
-# Get the sentiments associated with these words
-words_unmatched_sent <- words_unmatched %>%
-    left_join(nrc, by = c("essay_words" = "word")) %>%
-    group_by(sentiment) %>%
-    mutate(completed_freq = sum(completed_freq),
-           expired_freq= sum(expired_freq)) %>%
-    ungroup()
+success_standout_sentiments <- anti_join(words_unmatched %>%
+                                           filter(pct_rank_diff > 0) %>%
+                                           distinct(sentiment) %>%
+                                           arrange(desc(pct_rank_diff)) %>%
+                                           select(sentiment),
+                                         words_unmatched_sent %>%
+                                           filter(pct_rank_diff < 0) %>%
+                                           distinct(sentiment) %>%
+                                           arrange(pct_rank_diff) %>%
+                                           select(sentiment),
+                                         by = "sentiment")
 
 # Print out the sentiments for the words that appear often in
 # essays for "completed" projects, but not in essays for 
 # "expired" projects
-print(words_unmatched_sent)
+print(success_standout_sentiments)
 
 # Now look 
 # "Students" stands out for both "completed" and "expired" projects,

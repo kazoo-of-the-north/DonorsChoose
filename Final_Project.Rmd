@@ -669,6 +669,42 @@ wordcloud(essays_word_freq$essay_words, essays_word_freq$expired_freq,
 
 Looking at the wordcloud, one of the things that stood out were the higher relative prominence of "books" for funded projects versus "technology" for expired projects.
 
+Further analysis was done to see if we could identify words that occur at a high frequency in essays associated with either "completed" and "expired" projects, but don't show up in the other. We extracted the sentiments for those words to see if there were particular sentiments that are related to those words.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Find words that rank high for "completed" essays but are at
+# least 75% points lower in "expired" essays and vice versa
+# The words are ranked based off of percentage of occurance 
+# in completed and essays. Add sentiments for those words
+words_unmatched <- essays_word_freq %>%
+  mutate(pct_rank_completed = percent_rank(completed_freq),
+         pct_rank_expired = percent_rank(expired_freq)) %>%
+  mutate(pct_rank_diff = (pct_rank_completed-pct_rank_expired)) %>%
+  filter(abs(pct_rank_completed-pct_rank_expired) > 0.75) %>%
+  left_join(nrc, by = c("essay_words" = "word")) %>%
+  arrange(wt=abs(pct_rank_diff))
+
+success_standout_sentiments <- anti_join(words_unmatched %>%
+                                           filter(pct_rank_diff > 0) %>%
+                                           distinct(sentiment) %>%
+                                           arrange(desc(pct_rank_diff)) %>%
+                                           select(sentiment),
+                                         words_unmatched %>%
+                                           filter(pct_rank_diff < 0) %>%
+                                           distinct(sentiment) %>%
+                                           arrange(pct_rank_diff) %>%
+                                           select(sentiment),
+                                         by = "sentiment")
+
+# Print out the sentiments for the words that appear often in
+# essays for "completed" projects, but not in essays for 
+# "expired" projects
+print(success_standout_sentiments)
+
+```
+
+We were able to identify "surprise" and "anticipation" as sentiments that show up more in essays associated with "completed" projects as opposed to "expired" projects.
+
 <a href="#top">back to top</a><br>
 
 #### Essay Length Analysis:  Comparing the word count for completed vs expired projects
